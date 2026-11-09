@@ -20,20 +20,20 @@ NEVER: the name HAIA in the body (signature only) · customers, pilots, integrat
    - `plan.cohort` = `market`: the opener is the market event and what it means for this company's customers; never present it as news about the company.
 2. The guess: starts with "My guess" — about `process_a`, in one of the three allowed shapes above. Never negative about the company.
 3. Exactly this shape: "We've built software that follows each <operation> across systems and shows where it stopped and who owns it. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess."
-4. The offer in one sentence: "For <Company>, that could mean <offer applied to their operation>: which stalled, why, and who had them." (adapt the tail to the offer).
+4. The offer in one sentence that names the RESULT they get, not only what we run: "For <Company>, that could mean putting <a month of their operation> through it and seeing <what they would see: which step each one stopped at, who had it / which would have been caught / which came back>." "We run your data" without what they see is not an offer.
 5. The ending — the "Мягкий" variant: one question with a concrete option A and their alternative, ending with "?": "Worth trying on <X>, or <their alternative>?"
 Start with "Hi <first name>,". Subject: 2–5 words, looks internal, tied to the trigger. Signature, each on its own line: sender.name / sender.title / sender.site.
 
 `ending_call` — the "20 минут" variant of paragraph 5 (the code swaps it in): "Would 20 minutes be worth it to compare how your team <does X> today?" A discovery conversation, not a demo. The whole email with this ending must also fit 120 words.
 
 ## D0-LI · first message in LinkedIn (max 80 words) — used when the main channel is LinkedIn
-"<First name>, " + trigger + guess + "We've built software that follows each <operation> across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data." + the Мягкий question. End with sender.short on its own line.
+"<First name>, " + trigger + guess + a one-line result ("A month of <operation> through it would show where each one stopped.") + "We've built software that follows each <operation> across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data." + the Мягкий question. End with sender.short on its own line.
 
 ## +3 · email in the same thread (max 90 words)
 Basis rule (the code checks it):
 - If `plan.d3_options` contains a trigger id that you did NOT mention on day 0 → +3 is built on that trigger and its offer. Set `d3_basis` to that id.
 - Otherwise +3 is hypothesis B: `process_b`, with the day 0 offer. Set `d3_basis` to "B".
-Shape: "Hi <first name>," + "Another angle: …" + the offer in one sentence + a question comparing with day 0, ending with "?". Signature: sender.short. No subject.
+Shape: "Hi <first name>," + "Another angle: …" + the offer in one sentence that names what they would see (same rule as day 0) + a question comparing with day 0, ending with "?". Signature: sender.short. No subject.
 
 ## +7 · LinkedIn message after the connection is accepted (max 80 words)
 Something NEW: a sharp question or an observation about their operation — not a reminder. "<First name>, a question rather than a pitch. …" End with "I emailed you a short note on it." and sender.short on its own line.

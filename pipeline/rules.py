@@ -414,6 +414,9 @@ def check_package(pkg: ContactPackage, contact: Contact, account_fact: str, rese
             m = CATEGORY_DRIFT.search(ours)
             if m:
                 P.append(f"D0: описание нас / оффер уводит в сверку — мы не reconciliation-инструмент ({m.group(0)!r})")
+            offer = next((x for x in paras if x.lower().startswith("for ")), "")
+            if offer and not re.search(r"\b(see|seeing|show|shows|showing|would have|caught|spot)\b", offer, re.I):
+                P.append("D0: оффер без результата — назовите, что человек увидит (seeing / would show …)")
             if plan.d1_offer == "PREBUILD" and not re.search(r"before (you )?commit", low):
                 P.append("D0: оффер PREBUILD — «проверить до того, как вкладывать разработчиков» (before committing…)")
             # вариант «20 минут»

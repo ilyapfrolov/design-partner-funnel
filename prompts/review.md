@@ -11,6 +11,7 @@ FAIL types (any one of them → verdict FAIL):
 - `trivial_guess` — the guess describes something their own system already handles by itself (matching a payment to its own account or IBAN, a bill to the payer, posting a receipt) instead of an operation across systems or parties, a rule check before money moves, or a risky change.
 - `guess_as_fact` — an assumption about their operations stated as fact instead of "My guess…".
 - `generic` — day 1 would fit another company without changes; the offer is not tied to their specific process or data.
+- `no_result` — an offer that only says what we would run ("run a month of X through it") without what they would see or get from it.
 - `call_ask` — asks for a call, meeting or N minutes; or the day 1 ending is an open question with no concrete option A.
 - `tone` — defensive, apologetic, flattering, salesy or bureaucratic; a list of product modules.
 - `favor_ask` — the ask is framed as helping us instead of what they get.
