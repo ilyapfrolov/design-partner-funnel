@@ -1,22 +1,24 @@
-You qualify ONE company against the ICP definitions. Use WebFetch on the company's own website first (home,
-product, about, pricing, docs), and WebSearch only for company size.
+You qualify ONE company against the ICP. Use WebFetch on the company's own website first (home, product,
+about, pricing, docs), then WebSearch for anything missing. The goal is to KEEP real candidates and record how sure
+we are — not to prove everything. Unknown is an acceptable answer for any field except `fit`.
 
 {ICP}
 
 ## Decide
-1. `fit` — true only if the company's OWN site shows it runs one of the ICP money flows. Otherwise false with
-   `reject_reason` (one short line).
-2. `segment` — the exact segment name from the definitions (e.g. "ICP-3 Cards / issuing / BaaS"). `target_segment`
-   in the input is what we searched for; if the company clearly belongs to another segment, say so honestly.
-3. `quote` — a verbatim sentence or phrase (≤30 words) from a page on the company's OWN domain that proves the
-   segment. `quote_url` — that exact page. The code opens it and checks the quote word for word.
-4. `product_scope` — one sentence: what the company does for its customers. `money_flow` — one sentence: the
-   concrete money process it runs (e.g. "card authorisation → clearing → settlement for programme clients").
-5. `country` — country of headquarters or main operations, full English name.
-6. `size` — employee range in the form "11–50 (LinkedIn)", "51–200 (LinkedIn)", "201–500 (LinkedIn)",
-   "1,001–5,000 (LinkedIn)" or the same with another source in brackets. `size_source` — the page you took it
-   from (the company's LinkedIn page https://www.linkedin.com/company/<slug> is preferred). If you cannot find a
-   size with a source, leave both empty — never guess.
+1. `fit` — false ONLY if the company clearly runs none of the financial Jobs above, or is not a live business.
+   When in doubt, fit = true. If false, one short `reject_reason`.
+2. `segment` — the exact segment name. `target_segment` in the input is what we searched for; if the company
+   clearly belongs to another segment, say so honestly.
+3. `quote` + `quote_url` — a verbatim phrase (≤30 words) that supports the segment. Prefer the company's own site;
+   otherwise any credible page (news, regulator register, partner page). The code checks the quote on that page.
+   If you found nothing quotable, leave both empty — the company is still kept, marked "inferred".
+4. `product_scope` — one sentence: what the company does for its customers. `money_flow` — one sentence: the money
+   process it runs (e.g. "card authorisation → clearing → settlement for programme clients").
+5. `country` — country of headquarters or main operations, full English name; empty if unknown.
+6. `size` — employee range like "11–50 (LinkedIn)", "51–200 (LinkedIn)", "201–500 (company site)". `size_source` —
+   where you saw it (the company's LinkedIn page https://www.linkedin.com/company/<slug> is preferred). If there is
+   no source but you can reasonably estimate, give the range with "(estimate)" and leave `size_source` empty.
+   If you cannot even estimate, leave both empty.
 7. `owner_role` — the job title that owns this money process at this company (e.g. "Head of Card Operations",
    "COO" for a small company).
 

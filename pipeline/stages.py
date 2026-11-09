@@ -19,8 +19,8 @@ from .models import (Account, AccountState, Contact, ExtractResult, PeopleResult
 from .notion import Notion, plain, relation_ids, text_prop
 from .providers import OWNER_TITLES, Findymail
 from .render import card_blocks, card_title
-from .rules import (apply_tiers, assign_schedule, check_package, contact_level, executors_target, make_plan,
-                    people_gate, size_band, usable_triggers, words)
+from .rules import (apply_tiers, check_package, contact_level, executors_target, make_plan, nearest_titles,
+                    people_gate, pick_recipients, role_tier, segment_roles, size_band, usable_triggers, words)
 from .verify import fetch_text, quote_in_text, verify_quote
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -274,23 +274,20 @@ def _valid_web_candidate(c) -> bool:
 
 def people(st: AccountState, runner: Runner, cfg: dict, today: date, provider: Findymail | None = None,
            notion: Notion | None = None) -> AccountState:
-    """Снизу вверх: исполнители (цель по размеру) + владелец процесса, если его нет с email.
-    Владелец нужен всем: в малой компании это первый контакт, в средней и крупной — руководитель с дня 3."""
-    band = size_band(st.account.size)
+    """Снизу вверх по лестнице ролей (roles.yaml): исполнители до цели по размеру, затем владелец процесса,
+    затем — если владельца с email нет — ближайший по смыслу. Пишем только тем, кто на лестнице."""
+    band, seg = size_band(st.account.size), st.account.segment
     target = executors_target(band)
+    sr = segment_roles(seg)
     dom = _domain(st)
     provider = provider or Findymail()
     known = {_norm(c.name) for c in st.contacts}
 
-    def execs() -> list[Contact]:
-        return [c for c in st.contacts if contact_level(c.title) == "executor" and c.email]
-
-    def owners() -> list[Contact]:
-        return [c for c in st.contacts if contact_level(c.title) != "executor" and c.email]
+    def have(tier: str) -> list[Contact]:
+        return [c for c in st.contacts if c.email and role_tier(c.title, seg, band) == tier]
 
     def add(name: str, title: str, linkedin: str, source_url: str, found_by: str, want: str) -> bool:
-        lvl = contact_level(title)
-        if not name or _norm(name) in known or (lvl == "executor") != (want == "executor"):
+        if not name or _norm(name) in known or role_tier(title, seg, band) != want:
             return False
         email = ""
         if provider.enabled and dom:
@@ -305,25 +302,34 @@ def people(st: AccountState, runner: Runner, cfg: dict, today: date, provider: F
         known.add(_norm(name))
         return True
 
-    # (кого ищем, способ, описание); заходы идут, пока цель не набрана
+    titles = {"executor": sr["executor_titles"], "owner": sr["owner_titles"], "nearest": nearest_titles(seg)}
+    if band == "small":
+        titles["owner"] = ["Founder", "CEO"] + titles["owner"]
+    # (кого ищем, способ, описание). Заходы идут, пока ступень не закрыта.
     plan: list[tuple[str, str, str]] = []
-    if target:
+    for want, label in (("executor", "исполнители"), ("owner", "владелец процесса"), ("nearest", "ближайший по смыслу")):
+        if want == "executor" and not target:
+            continue
         if provider.enabled and dom:
-            plan.append(("executor", "provider", "поставщик: исполнители по должностям"))
-        plan += [("executor", "web1", "веб: команда, спикеры, подкасты, публичные профили"),
-                 ("executor", "web2", "веб: вакансии, цитаты в прессе, кейсы партнёров")]
-    if provider.enabled and dom:
-        plan.append(("owner", "provider", "поставщик: владелец процесса"))
-    plan.append(("owner", "web1", "веб: владелец процесса (сайт, пресса, профили)"))
+            plan.append((want, "provider", f"поставщик: {label}"))
+        plan.append((want, "web1", f"веб: {label} — команда, спикеры, профили"))
+        if want == "executor":
+            plan.append((want, "web2", f"веб: {label} — вакансии, пресса, кейсы партнёров"))
+
+    def closed(want: str) -> bool:
+        if want == "executor":
+            return len(have("executor")) >= target
+        if want == "owner":
+            return bool(have("owner"))
+        return bool(have("owner") or have("nearest"))
 
     for want, kind, method in plan:
-        if (want == "executor" and len(execs()) >= target) or (want == "owner" and owners()):
+        if closed(want):
             continue
         added = 0
         if kind == "provider":
             try:
-                titles = None if want == "executor" else OWNER_TITLES
-                for e in provider.employees(dom, titles):
+                for e in provider.employees(dom, titles[want]):
                     added += add(e.get("name", ""), e.get("jobTitle", ""), e.get("linkedinUrl", ""),
                                  "findymail", "provider", want)
             except RuntimeError as err:
@@ -331,19 +337,21 @@ def people(st: AccountState, runner: Runner, cfg: dict, today: date, provider: F
         else:
             res = call_json(runner, _prompt("people.md", {
                 "mode": want, "round": 1 if kind == "web1" else 2, "company": st.account.company, "domain": dom,
-                "country": st.account.country, "already_known": sorted(c.name for c in st.contacts)}),
+                "country": st.account.country, "segment": seg, "titles_wanted": titles[want],
+                "already_known": sorted(c.name for c in st.contacts)}),
                 PeopleResult, model=cfg["models"]["research"], tools=["WebSearch", "WebFetch"],
                 timeout=cfg["timeouts"]["research_sec"])
             for c in res.candidates:
                 if _valid_web_candidate(c):
                     added += add(c.name, c.title, c.linkedin_url, c.source_url, "web", want)
         st.people_log.append(RoundLog(round=len(st.people_log) + 1, method=method, triggers_found=added,
-                                      triggers_usable=len(execs()) if want == "executor" else len(owners())))
+                                      triggers_usable=len(have(want))))
 
-    st.contacts = assign_schedule(st.contacts, band)
     if notion is not None:
-        write_new_contacts(st, notion, cfg)
-    ok, why = people_gate(st.contacts, band)
+        write_new_contacts(st, notion, cfg)       # в базу контактов — все найденные, даже без email
+    ok, why = people_gate(st.contacts, band, seg)
+    st.contacts, skipped = pick_recipients(st.contacts, band, seg)
+    st.skipped_contacts += skipped
     if not ok:
         tried = "; ".join(f"{x.method}: +{x.triggers_found}" for x in st.people_log) or "заходы не требовались"
         return _hold(st, "needs_people", f"{why} ({tried})", today)

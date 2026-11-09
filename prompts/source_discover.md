@@ -8,9 +8,9 @@ in one of `countries`. Follow the `strategy` for this round — it names the TYP
 companies with a live product and visible customers; small and mid-sized companies are welcome.
 
 Rules:
-- Every candidate must come from a concrete page that NAMES the company: a register entry or list page, a ranking,
-  a directory, a conference list, a news article. Put that page in `source_url` and the verbatim line naming the
-  company in `evidence`. The code opens the page and checks the name — candidates from memory are rejected.
+- Every candidate should come from a concrete page that names the company: a register entry or list page, a
+  ranking, a directory, a conference list, a news article. Put that page in `source_url` and the line naming the
+  company in `evidence`. The code records whether the page names the company.
 - `domain` — the company's own website domain (e.g. "example.com"), not a profile on another site.
 - `country` — the country of headquarters or main operations, full English name.
 - Skip any company whose domain is in `exclude_domains` — they are already in the base.

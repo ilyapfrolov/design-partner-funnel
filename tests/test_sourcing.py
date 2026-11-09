@@ -2,8 +2,8 @@
 import json
 from datetime import date
 
-from pipeline.sourcing import (Candidate, Qualification, account_props, check_candidate, check_qualification,
-                               check_size, deficits, next_ids, reg_domain, report, source, split_cells)
+from pipeline.sourcing import (Candidate, Qualification, account_props, deficits, hard_reject, next_ids, reg_domain,
+                               report, segment_confidence, size_status, source, source_named, split_cells)
 
 FA = {"company": "Компания", "segment": "Сегмент", "status": "Статус", "domain": "Домен", "account_id": "Account ID",
       "priority": "Приоритет", "size": "Размер", "role": "Роль", "fact": "X — факт", "source": "Источник",
@@ -13,7 +13,8 @@ CFG = {
     "notion": {"accounts": FA, "accounts_data_source_id": "x"},
     "models": {"research": "x"}, "timeouts": {"research_sec": 1},
     "sourcing": {"targets": {SEG3: 3, SEG5: 1}, "regions": {"SEA": ["Singapore"], "GCC": ["United Arab Emirates", "UAE"]},
-                 "rounds": 3, "per_call": 10, "exclude_statuses": ["Research hold"], "account_id_prefix": "HAIA-FIN-"},
+                 "rounds": 3, "per_call": 10, "exclude_statuses": ["Research hold"], "account_id_prefix": "HAIA-FIN-",
+                 "priority_by_segment": {SEG3: "P1", SEG5: "P2"}},
 }
 
 
@@ -45,11 +46,11 @@ def test_reg_domain_and_ids():
     assert next_ids(["HAIA-FIN-0139", "HAIA-FIN-0700", "X"], "HAIA-FIN-", 2) == ["HAIA-FIN-0701", "HAIA-FIN-0702"]
 
 
-def test_candidate_must_be_named_on_source():
+def test_source_named_is_label_not_filter():
     c = Candidate(company="Nium", domain="nium.com", source_url="https://list.example/a")
-    assert check_candidate(c, lambda u: "Top fintechs: Nium, Thunes, Aspire") == ""
-    assert check_candidate(c, lambda u: "Top fintechs: Thunes, Aspire") == "компания не названа на странице-источнике"
-    assert check_candidate(c, lambda u: None) == "страница-источник недоступна"
+    assert source_named(c, lambda u: "Top fintechs: Nium, Thunes") == "named"
+    assert source_named(c, lambda u: "Top fintechs: Thunes") == "not_named"
+    assert source_named(c, lambda u: None) == "unreachable"
 
 
 def _q(**kw):
@@ -64,28 +65,29 @@ C = Candidate(company="Acme Cards", domain="acme.sg", country="Singapore", sourc
 PAGE = lambda u: "Launch and manage card programmes for your customers, globally."
 
 
-def test_qualification_accepts_verified():
-    assert check_qualification(_q(), C, SEG3, ["Singapore"], {SEG3}, PAGE) == ("", "", "linkedin_not_fetchable")
+def test_only_junk_is_rejected():
+    ok = {SEG3}
+    assert hard_reject(_q(), C, ["Singapore"], ok) == ("", "")
+    assert hard_reject(_q(country=""), C.model_copy(update={"country": ""}), ["Singapore"], ok) == ("", "")  # регион неизвестен — оставляем
+    assert hard_reject(_q(quote="", quote_url="", size="", size_source=""), C, ["Singapore"], ok) == ("", "")  # нет доказательств — не отказ
+    assert hard_reject(_q(fit=False, reject_reason="KYC only"), C, ["Singapore"], ok)[0] == "qualify"
+    assert hard_reject(_q(country="Brazil"), C, ["Singapore"], ok)[0] == "region"
+    assert hard_reject(_q(segment="ICP-1 PSP / acquiring"), C, ["Singapore"], ok)[0] == "segment"
 
 
-def test_qualification_rejections():
-    cases = [
-        (_q(fit=False, reject_reason="KYC only"), "qualify"),
-        (_q(segment="ICP-1 PSP / acquiring"), "segment"),
-        (_q(quote_url="https://medium.com/acme"), "quote"),
-        (_q(quote="We are the largest bank in the world"), "quote"),
-        (_q(country="Brazil"), "region"),
-        (_q(size="", size_source=""), "size"),
-        (_q(size_source="https://www.linkedin.com/company/someone-else"), "size"),
-    ]
-    for q, stage in cases:
-        assert check_qualification(q, C, SEG3, ["Singapore"], {SEG3}, PAGE)[0] == stage, q
+def test_segment_confidence_labels():
+    assert segment_confidence(_q(), "acme.sg", PAGE) == "site"
+    assert segment_confidence(_q(quote_url="https://news.example/acme"), "acme.sg", PAGE) == "other_source"
+    assert segment_confidence(_q(quote="Something else entirely here"), "acme.sg", PAGE) == "inferred"
+    assert segment_confidence(_q(quote="", quote_url=""), "acme.sg", PAGE) == "inferred"
 
 
-def test_size_verified_on_open_page():
-    q = _q(size="11–50 (company site)", size_source="https://acme.sg/about")
-    assert check_size(q, "Acme Cards", "acme.sg", lambda u: "A team of 11-50 people")[0] == "verified"
-    assert check_size(q, "Acme Cards", "acme.sg", lambda u: "A growing team")[1] == "цифры размера не найдены в источнике"
+def test_size_labels():
+    assert size_status(_q(), "Acme Cards", "acme.sg", PAGE) == "linkedin"
+    assert size_status(_q(size="11–50 (site)", size_source="https://acme.sg/about"), "Acme Cards", "acme.sg",
+                       lambda u: "A team of 11-50 people") == "verified"
+    assert size_status(_q(size="11–50 (estimate)", size_source=""), "Acme Cards", "acme.sg", PAGE) == "estimate"
+    assert size_status(_q(size="", size_source=""), "Acme Cards", "acme.sg", PAGE) == "unknown"
 
 
 class FakeRunner:
@@ -106,7 +108,7 @@ class FakeRunner:
                 {"company": f"Beta {inp['region']}", "domain": f"beta-{inp['region'].lower()}.com", "country": "x", "source_url": "https://l/2"}]})
         if "You qualify ONE company" in prompt:
             self.calls.append(("qualify", inp["company"]))
-            country = "Singapore" if "SEA" in inp["company"] else "UAE"
+            country = "UAE" if "GCC" in inp["company"] else "Singapore"
             return json.dumps(_q(country=country, quote_url=f"https://{inp['domain']}/cards",
                                  size_source=f"https://www.linkedin.com/company/{inp['company'].lower().replace(' ', '-')}").model_dump())
         raise AssertionError(prompt[:60])
@@ -124,12 +126,15 @@ def test_source_end_to_end():
     r = FakeRunner()
     res = source(CFG, ROWS, r, date(2026, 11, 9), fetch=fake_fetch)
     assert res.deficits == {SEG3: 2}
-    assert [a.company for a in res.accepted] == ["Acme SEA", "Acme GCC"]      # по 1 на регион, дальше дефицит закрыт
+    # заход 1: Highnote — дубль; Ghost Co не назван на странице, но это пометка, а не отказ → принят
+    assert [a.company for a in res.accepted] == ["Ghost Co", "Acme GCC"]
+    assert res.accepted[0].source_named == "not_named" and res.accepted[0].priority == "P1"
     stages = {(x.company, x.stage) for x in res.rejected}
-    assert ("Highnote", "dedupe") in stages and ("Ghost Co", "discover") in stages
+    assert ("Highnote", "dedupe") in stages
     assert ("qualify", "Highnote") not in r.calls                           # дубль не квалифицируется
-    props = account_props(res.accepted[0], CFG)
-    assert props["Сегмент"] == {"select": {"name": SEG3}} and "кодом не проверено" in props["Размер"]["rich_text"][0]["text"]["content"]
+    props = account_props(res.accepted[1], CFG)
+    assert props["Сегмент"] == {"select": {"name": SEG3}} and props["Приоритет"] == {"select": {"name": "P1"}}
+    assert "кодом не проверено" in props["Размер"]["rich_text"][0]["text"]["content"]
     assert "Отклонено по причинам" in report(res)
 
 

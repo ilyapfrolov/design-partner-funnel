@@ -40,6 +40,7 @@ class Contact(BaseModel):
     source_url: str = ""          # где найден (для найденных пайплайном)
     found_by: str = ""            # base / web / provider
     level: Literal["leader", "head", "executor"] = "leader"
+    tier: Literal["executor", "owner", "nearest", ""] = ""   # ступень лестницы ролей (roles.yaml)
     start_day: int = 1            # 3 — руководитель крупного аккаунта (снизу вверх)
 
 

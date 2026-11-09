@@ -79,7 +79,10 @@ class SourcedAccount(BaseModel):
     money_flow: str
     size: str
     size_source: str
-    size_check: str               # verified / linkedin_not_fetchable
+    size_check: str               # verified / linkedin / estimate / unknown
+    segment_confidence: str       # site / other_source / inferred
+    source_named: str             # named / not_named / unreachable — названа ли на странице, где найдена
+    priority: str
     owner_role: str
     found_via: str
     round: int
@@ -170,65 +173,57 @@ def next_ids(existing: list[str], prefix: str, n: int) -> list[str]:
 
 
 # ---------- проверки кода ----------
+# Жёстко отсекаем только мусор (SPEC §12): нет домена / сайт мёртв / дубль / не финансовая компания /
+# явно не наш регион / сегмент без дефицита. Всё остальное — пометки уверенности, а не фильтр.
 
-def check_candidate(c: Candidate, fetch: Callable[[str], str | None]) -> str:
-    """Пусто — кандидат прошёл; иначе причина отказа."""
-    if not c.domain or "." not in domain_of(c.domain):
-        return "нет домена"
+def source_named(c: Candidate, fetch: Callable[[str], str | None]) -> str:
     page = fetch(c.source_url) if c.source_url.startswith("http") else None
     if page is None:
-        return "страница-источник недоступна"
+        return "unreachable"
     name = c.company.strip()
-    if not (quote_in_text(name, page) or norm_name(name) and norm_name(name) in re.sub(r"[^a-z0-9]", "", page.lower())):
-        return "компания не названа на странице-источнике"
-    return ""
+    flat = re.sub(r"[^a-z0-9]", "", page.lower())
+    return "named" if quote_in_text(name, page) or (norm_name(name) and norm_name(name) in flat) else "not_named"
 
 
-def check_size(q: Qualification, company: str, domain: str, fetch: Callable[[str], str | None]) -> tuple[str, str]:
-    """(статус, причина). verified — числа есть на странице; linkedin_not_fetchable — страница компании
-    в LinkedIn, чей адрес совпадает с компанией или доменом (LinkedIn закрыт для кода)."""
+def size_status(q: Qualification, company: str, domain: str, fetch: Callable[[str], str | None]) -> str:
+    """verified — цифры есть на открытой странице; linkedin — страница компании в LinkedIn (коду закрыта);
+    estimate — размер назван, но не подтверждён; unknown — размера нет."""
     if size_band(q.size) == "unknown":
-        return "", "размер не указан"
-    if not q.size_source.startswith("http"):
-        return "", "нет ссылки на размер"
-    m = LINKEDIN_CO.match(q.size_source)
+        return "unknown"
+    m = LINKEDIN_CO.match(q.size_source or "")
     if m:
         slug = norm_name(m.group(2))
-        if slug and (slug in norm_name(company) or norm_name(company) in slug or slug in reg_domain(domain).replace(".", "")):
-            return "linkedin_not_fetchable", ""
-        return "", "страница LinkedIn не совпадает с компанией"
-    page = fetch(q.size_source)
-    if page is None:
-        return "", "источник размера недоступен"
-    nums = re.findall(r"\d[\d,]*", q.size)
-    if nums and all(n.replace(",", "") in page.replace(",", "") for n in nums[:2]):
-        return "verified", ""
-    return "", "цифры размера не найдены в источнике"
+        if slug and (slug in norm_name(company) or norm_name(company) in slug
+                     or slug in reg_domain(domain).replace(".", "")):
+            return "linkedin"
+        return "estimate"
+    if q.size_source.startswith("http"):
+        page = fetch(q.size_source)
+        nums = re.findall(r"\d[\d,]*", q.size)
+        if page and nums and all(n.replace(",", "") in page.replace(",", "") for n in nums[:2]):
+            return "verified"
+    return "estimate"
 
 
-def check_qualification(q: Qualification, c: Candidate, seg: str, region_countries: list[str], open_segments: set[str],
-                        fetch: Callable[[str], str | None]) -> tuple[str, str, str]:
-    """(stage, reason, size_check). stage пустой — принято."""
-    if not q.fit:
-        return "qualify", q.reject_reason or "не подходит по определениям ICP", ""
-    if q.segment not in open_segments:
-        return "segment", f"сегмент «{q.segment}» вне дефицита (искали «{seg}»)", ""
-    if reg_domain(q.quote_url) != reg_domain(c.domain):
-        return "quote", "цитата не с сайта компании", ""
-    if len(q.quote.split()) > 30 or not q.quote.strip():
-        return "quote", "цитата пустая или длиннее 30 слов", ""
+def segment_confidence(q: Qualification, domain: str, fetch: Callable[[str], str | None]) -> str:
+    if not q.quote.strip() or not q.quote_url.startswith("http"):
+        return "inferred"
     page = fetch(q.quote_url)
-    if page is None:
-        return "quote", "страница с цитатой недоступна коду", ""
-    if not quote_in_text(q.quote, page):
-        return "quote", "цитата не найдена на странице", ""
+    if page is None or not quote_in_text(q.quote, page):
+        return "inferred"
+    return "site" if reg_domain(q.quote_url) == reg_domain(domain) else "other_source"
+
+
+def hard_reject(q: Qualification, c: Candidate, region_countries: list[str], open_segments: set[str]) -> tuple[str, str]:
+    """(stage, reason); пусто — проходит."""
+    if not q.fit:
+        return "qualify", q.reject_reason or "не ведёт ни одной финансовой операции из ICP"
+    if q.segment not in open_segments:
+        return "segment", f"сегмент «{q.segment}» без дефицита"
     country = (q.country or c.country).strip().lower()
-    if region_countries and country not in [x.lower() for x in region_countries]:
-        return "region", f"страна «{q.country or c.country}» вне региона", ""
-    size_check, why = check_size(q, c.company, c.domain, fetch)
-    if not size_check:
-        return "size", why, ""
-    return "", "", size_check
+    if country and region_countries and country not in [x.lower() for x in region_countries]:
+        return "region", f"страна «{q.country or c.country}» вне региона"
+    return "", ""
 
 
 # ---------- этап ----------
@@ -275,9 +270,8 @@ def source(cfg: dict, rows: list[dict], runner: Runner, today: date,
                 if rd in known_domains or (nn and nn in known_names):
                     run.rejected.append(Rejection(company=c.company, domain=rd, cell=cell, stage="dedupe", reason="уже в базе"))
                     continue
-                why = check_candidate(c, fetch)
-                if why:
-                    run.rejected.append(Rejection(company=c.company, domain=rd, cell=cell, stage="discover", reason=why))
+                if not c.domain or "." not in domain_of(c.domain):
+                    run.rejected.append(Rejection(company=c.company, domain=rd, cell=cell, stage="discover", reason="нет домена"))
                     continue
                 if fetch(f"https://{domain_of(c.domain)}") is None:
                     run.rejected.append(Rejection(company=c.company, domain=rd, cell=cell, stage="site", reason="сайт не открывается"))
@@ -287,7 +281,7 @@ def source(cfg: dict, rows: list[dict], runner: Runner, today: date,
                     "target_segment": seg, "region_countries": regions[reg]}),
                     Qualification, model=cfg["models"]["research"], tools=["WebSearch", "WebFetch"],
                     timeout=cfg["timeouts"]["research_sec"])
-                stage, why, size_check = check_qualification(q, c, seg, regions[reg], {s for s, v in remaining.items() if v > 0}, fetch)
+                stage, why = hard_reject(q, c, regions[reg], {s for s, v in remaining.items() if v > 0})
                 known_domains.add(rd)
                 known_names.add(nn)
                 if stage:
@@ -296,7 +290,10 @@ def source(cfg: dict, rows: list[dict], runner: Runner, today: date,
                 acc = SourcedAccount(company=c.company.strip(), domain=f"https://{rd}", segment=q.segment, region=reg,
                                      country=q.country or c.country, product_scope=q.product_scope, quote=q.quote,
                                      quote_url=q.quote_url, money_flow=q.money_flow, size=q.size,
-                                     size_source=q.size_source, size_check=size_check,
+                                     size_source=q.size_source, size_check=size_status(q, c.company, c.domain, fetch),
+                                     segment_confidence=segment_confidence(q, c.domain, fetch),
+                                     source_named=source_named(c, fetch),
+                                     priority=sc.get("priority_by_segment", {}).get(q.segment, sc.get("priority", "P2")),
                                      owner_role=q.owner_role or "Head of Operations", found_via=c.source_url, round=rnd)
                 run.accepted.append(acc)
                 remaining[q.segment] -= 1
@@ -311,29 +308,40 @@ def source(cfg: dict, rows: list[dict], runner: Runner, today: date,
 
 # ---------- запись в Notion ----------
 
+SIZE_RU = {"verified": "подтверждено ссылкой", "linkedin": "LinkedIn, кодом не проверено",
+           "estimate": "оценка", "unknown": "неизвестен"}
+SEGMENT_RU = {"site": "подтверждён на сайте", "other_source": "подтверждён другим источником",
+              "inferred": "вывод по описанию"}
+
+
 def account_props(a: SourcedAccount, cfg: dict) -> dict:
     fa, sc = cfg["notion"]["accounts"], cfg["sourcing"]
-    size = a.size if a.size_check == "verified" else f"{a.size} — LinkedIn, кодом не проверено"
-    fact = (f"Documented / source-reported product scope: {a.product_scope} Money flow: {a.money_flow} "
-            f"Evidence: \"{a.quote}\"")
-    notes = (f"Добавлено этапом source {date.today().isoformat()} · регион {a.region}, {a.country} · "
-             f"найдено через {a.found_via} (заход {a.round}). Гипотеза и ценность не заполнялись: воронка "
-             f"исследует аккаунт сама.")
+    size = "NOT VERIFIED" if a.size_check == "unknown" else f"{a.size} — {SIZE_RU[a.size_check]}"
+    evidence = f" Evidence: \"{a.quote}\"" if a.segment_confidence != "inferred" else ""
+    fact = f"Documented / source-reported product scope: {a.product_scope} Money flow: {a.money_flow}{evidence}"
+    notes = (f"Добавлено этапом source {date.today().isoformat()} · регион {a.region}, {a.country or 'страна не указана'} · "
+             f"сегмент: {SEGMENT_RU[a.segment_confidence]} · размер: {SIZE_RU[a.size_check]} · "
+             f"найдено через {a.found_via} (заход {a.round}; компания на странице: {a.source_named}). "
+             f"Гипотеза и ценность не заполнялись: воронка исследует аккаунт сама.")
     props = {fa["company"]: {"title": [{"type": "text", "text": {"content": a.company}}]},
              fa["segment"]: {"select": {"name": a.segment}},
-             fa["priority"]: {"select": {"name": sc.get("priority", "P1")}},
+             fa["priority"]: {"select": {"name": a.priority}},
              fa["status"]: {"select": {"name": sc.get("status", "Ready for enrichment")}},
              fa["size"]: text_prop(size, "rich_text"),
              fa["domain"]: text_prop(a.domain, "url"),
              fa["role"]: text_prop(a.owner_role, "rich_text"),
              fa["fact"]: text_prop(fact, "rich_text"),
-             fa["source"]: text_prop(a.quote_url, "url")}
+             fa["source"]: text_prop(a.quote_url if a.quote_url.startswith("http") else a.found_via, "url")}
     if fa.get("account_id") and a.account_id:
         props[fa["account_id"]] = text_prop(a.account_id, "rich_text")
-    if fa.get("size_source"):
+    if fa.get("size_source") and a.size_source.startswith("http"):
         props[fa["size_source"]] = text_prop(a.size_source, "url")
     if fa.get("notes"):
         props[fa["notes"]] = text_prop(notes, "rich_text")
+    if fa.get("segment_confidence"):
+        props[fa["segment_confidence"]] = {"select": {"name": SEGMENT_RU[a.segment_confidence]}}
+    if fa.get("size_status"):
+        props[fa["size_status"]] = {"select": {"name": SIZE_RU[a.size_check]}}
     return props
 
 
@@ -360,10 +368,18 @@ def report(run: SourceRun) -> str:
     for c in run.cells:
         r = "; ".join(f"{x['round']}: {x['strategy']} {x['proposed']}→{x['accepted']}" for x in c.rounds)
         L.append(f"| {c.segment} × {c.region} | {c.need} | {c.accepted} | {r} |")
-    L += ["", "## Принятые", "", "| Компания | Сегмент | Страна | Размер | Проверка размера | Цитата | Найдено через |", "|---|---|---|---|---|---|---|"]
+    L += ["", "## Уверенность у принятых", ""]
+    for label, key, ru in (("Сегмент", "segment_confidence", SEGMENT_RU), ("Размер", "size_check", SIZE_RU)):
+        cnt: dict[str, int] = {}
+        for a in run.accepted:
+            cnt[getattr(a, key)] = cnt.get(getattr(a, key), 0) + 1
+        L.append(f"- {label}: " + ", ".join(f"{ru[k]} — {v}" for k, v in cnt.items()))
+    L += ["", "## Принятые", "", "| Компания | Сегмент | Приоритет | Страна | Размер | Сегмент подтверждён | Цитата | Найдено через |",
+          "|---|---|---|---|---|---|---|---|"]
     for a in run.accepted:
-        L.append(f"| [{a.company}]({a.domain}) | {a.segment} | {a.country} | {a.size} | {a.size_check} | "
-                 f"[{a.quote[:80]}]({a.quote_url}) | [источник]({a.found_via}) |")
+        q = f"[{a.quote[:80]}]({a.quote_url})" if a.quote_url.startswith("http") else "—"
+        L.append(f"| [{a.company}]({a.domain}) | {a.segment} | {a.priority} | {a.country or '—'} | {a.size or '—'} "
+                 f"({SIZE_RU[a.size_check]}) | {SEGMENT_RU[a.segment_confidence]} | {q} | [источник]({a.found_via}) |")
     by: dict[str, int] = {}
     for r in run.rejected:
         by[f"{r.stage}: {r.reason}"] = by.get(f"{r.stage}: {r.reason}", 0) + 1

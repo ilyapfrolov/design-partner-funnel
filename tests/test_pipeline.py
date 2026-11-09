@@ -230,3 +230,40 @@ def test_new_account_without_contacts_searches_owner(monkeypatch):
     st = stages.people(st, runner, CFG, TODAY, provider=P())
     assert st.status == "people_ok" and st.contacts[0].title == "Co-Founder & CEO" and st.contacts[0].start_day == 1
     assert runner.seen == []                                     # поставщик нашёл — веб не понадобился
+
+
+# ---------- лестница ролей ----------
+
+from pipeline.rules import pick_recipients, role_tier  # noqa: E402
+
+C3, C1 = "ICP-3 Cards / issuing / BaaS", "ICP-1 PSP / acquiring"
+
+
+@pytest.mark.parametrize("title,seg,band,exp", [
+    ("Card Operations Manager", C3, "large", "executor"),
+    ("Head of Card Programs", C3, "large", "owner"),
+    ("COO", C3, "large", "owner"),
+    ("Co-Founder & CEO", C1, "small", "owner"),
+    ("Co-Founder & CEO", C1, "large", "nearest"),        # CEO крупной компании — только как ближайший
+    ("Head of Product", C3, "mid", "nearest"),
+    ("Chief Risk Officer", C1, "mid", "nearest"),        # risk — ближайший для PSP
+    ("Chief Risk Officer", C3, "mid", ""),               # для карт risk не в лестнице
+    ("Head of Sales", C1, "small", ""),
+    ("Payment Operations Engineer", C1, "mid", ""),      # разработка — никогда
+    ("Business Operations Director", C1, "small", "owner"),
+])
+def test_role_tiers(title, seg, band, exp):
+    assert role_tier(title, seg, band) == exp
+
+
+def test_recipients_bottom_up_with_nearest_fallback():
+    ex = Contact(key="c1", name="A A", title="Card Operations Manager", email="a@x.com")
+    pm = Contact(key="c2", name="B B", title="Head of Product", email="b@x.com")
+    sales = Contact(key="c3", name="C C", title="VP Sales", email="c@x.com")
+    out, skipped = pick_recipients([ex, pm, sales], "large", C3)
+    assert [(c.name, c.tier, c.start_day) for c in out] == [("A A", "executor", 1), ("B B", "nearest", 3)]
+    assert any("роль вне лестницы" in s for s in skipped)
+    head = Contact(key="c4", name="D D", title="Head of Card Operations", email="d@x.com")
+    out, skipped = pick_recipients([ex, pm, head], "large", C3)
+    assert [c.name for c in out] == ["A A", "D D"]                         # владелец есть — ближайший не нужен
+    assert any("B B" in s and "ступень уже занята" in s for s in skipped)

@@ -1,0 +1,73 @@
+# Лестница ролей: кому писать (SPEC §2). Источник — колонка «Основные собеседники» документа
+# «HAIA — Financial Buyer Discovery ICP» + правило «снизу вверх». Решение Ильи 9 Nov 2026.
+#
+# Как код читает должность:
+#   1. Есть слово из exclude → человеку не пишем никогда.
+#   2. Уровень: leader (founder / CEO / COO / chief…), head (head / director / VP), иначе executor.
+#   3. Функция: слова из core → основная функция сегмента; из nearest → «ближайший по смыслу».
+#   Ступени:
+#     executor — исполнитель (executor + core). В компаниях 51+ пишем им с дня 1.
+#     owner    — владелец процесса: head/leader + core, а также COO; в малых (до 50) — ещё founder / CEO.
+#                В 51+ — день 3 (если есть исполнитель), в малых — день 1.
+#     nearest  — ближайший по смыслу (функция из nearest, любой уровень; CEO/founder в 51+).
+#                Пишем, только если нет ни владельца, ни исполнителя с email.
+#   Должность вне лестницы — не пишем, в отчёт «роль вне лестницы».
+# Слова сравниваются по границам слова, без учёта регистра.
+
+exclude: [sales, marketing, growth, "business development", "account executive", "account manager", hr,
+          "human resources", people, talent, recruiter, recruiting, engineer, engineering, developer, software,
+          design, designer, support, "customer success", "customer service", legal, counsel, communications, pr,
+          brand, content, investor relations, intern]
+
+leaders_small: [founder, co-founder, cofounder, ceo, "chief executive", "managing director", president]
+ops_leaders: [coo, "chief operating", "chief operations"]
+
+segments:
+  "ICP-1 PSP / acquiring":
+    core: [payment, payments, merchant, settlement, settlements, reconciliation, operations, ops, acquiring]
+    nearest: [product, risk]
+    executor_titles: ["Payment Operations Manager", "Merchant Operations Manager", "Settlement Manager",
+                      "Reconciliation Manager", "Payments Operations Lead", "Operations Manager"]
+    owner_titles: ["Head of Payments", "Head of Operations", "COO", "Director of Payments", "VP Operations"]
+  "ICP-2 Fintech / wallets / neobanks":
+    core: [banking, payment, payments, operations, ops, wallet, accounts, cards]
+    nearest: [product]
+    executor_titles: ["Banking Operations Manager", "Payment Operations Manager", "Operations Manager",
+                      "Payments Operations Lead"]
+    owner_titles: ["COO", "Head of Banking Operations", "Head of Operations", "Head of Payments"]
+  "ICP-3 Cards / issuing / BaaS":
+    core: [card, cards, program, programme, issuing, operations, ops, disputes, chargeback, chargebacks]
+    nearest: [product]
+    executor_titles: ["Card Operations Manager", "Program Operations Manager", "Disputes Manager",
+                      "Card Program Manager", "Operations Manager"]
+    owner_titles: ["Head of Cards", "Head of Program Operations", "Head of Card Operations", "Head of Operations", "COO"]
+  "ICP-4 Cross-border / FX / PayFi":
+    core: [payment, payments, treasury, operations, ops, settlement, reconciliation, remittance, fx, payouts]
+    nearest: [product]
+    executor_titles: ["Payment Operations Manager", "Treasury Operations Manager", "Settlement Manager",
+                      "Reconciliation Manager", "Operations Manager"]
+    owner_titles: ["Head of Payments", "Head of Treasury Operations", "Head of Operations", "COO"]
+  "ICP-5 Digital assets / crypto / RWA":
+    core: [operations, ops, settlement, settlements, treasury, custody, reconciliation, payments]
+    nearest: [product, compliance]
+    executor_titles: ["Operations Manager", "Settlement Manager", "Treasury Operations Manager",
+                      "Custody Operations Manager", "Payments Operations Manager"]
+    owner_titles: ["COO", "Head of Operations", "Head of Treasury", "Head of Payments"]
+  "ICP-6 Investments / wealthtech":
+    core: [investment, investments, client, operations, ops, settlement, brokerage, trading, custody]
+    nearest: [product]
+    executor_titles: ["Investment Operations Manager", "Client Operations Manager", "Brokerage Operations",
+                      "Settlement Manager", "Operations Manager"]
+    owner_titles: ["Head of Investment Operations", "Head of Operations", "COO"]
+  "ICP-7 Lending / credit / BNPL":
+    core: [lending, loan, loans, credit, collections, operations, ops, servicing, disbursement]
+    nearest: [risk, product]
+    executor_titles: ["Credit Operations Manager", "Loan Operations Manager", "Collections Manager",
+                      "Lending Operations Lead", "Operations Manager"]
+    owner_titles: ["Head of Lending", "Head of Credit Operations", "Head of Operations", "COO"]
+
+default:   # сегмент не указан или не из списка
+  core: [payment, payments, operations, ops, settlement, reconciliation]
+  nearest: [product]
+  executor_titles: ["Payment Operations Manager", "Operations Manager", "Settlement Manager"]
+  owner_titles: ["Head of Operations", "Head of Payments", "COO"]

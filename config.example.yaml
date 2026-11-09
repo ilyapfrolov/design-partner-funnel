@@ -28,6 +28,8 @@ notion:
     source: "Источник"
     size_source: "Размер — источник"     # url; пишет этап source
     notes: "Заметки"                     # пишет этап source
+    segment_confidence: ""               # необязательно: select «Сегмент — уверенность» (иначе пометка в «Заметки»)
+    size_status: ""                      # необязательно: select «Размер — уверенность»
     funnel_status: ""                    # необязательно: select «Воронка — статус»
     funnel_page: ""                      # необязательно: url «Воронка — карточка»
 
@@ -91,10 +93,18 @@ sourcing:                    # этап source — наполнение базы
     GCC: ["United Arab Emirates", "UAE", "Saudi Arabia", "KSA", "Qatar", "Bahrain", "Kuwait", "Oman"]
     LATAM_AFRICA: ["Brazil", "Mexico", "Colombia", "Argentina", "Chile", "Peru", "Nigeria", "Kenya",
                    "South Africa", "Egypt", "Ghana", "Morocco"]
+  # регионы — поровну (решение Ильи 9 Nov 2026: ОАЭ и Сингапур уже наполнены, добираем поверх)
   rounds: 3                  # заходы поиска на ячейку: реестры → рейтинги и каталоги → новости
   per_call: 15
   exclude_statuses: ["Research hold"]
-  priority: "P1"
+  priority_by_segment:       # по документу «HAIA — Financial Buyer Discovery ICP»; ICP-3 — P1 (решение Ильи 9 Nov 2026)
+    "ICP-1 PSP / acquiring": "P1"
+    "ICP-2 Fintech / wallets / neobanks": "P1"
+    "ICP-3 Cards / issuing / BaaS": "P1"
+    "ICP-4 Cross-border / FX / PayFi": "P1"
+    "ICP-5 Digital assets / crypto / RWA": "P2"
+    "ICP-6 Investments / wealthtech": "P2"
+    "ICP-7 Lending / credit / BNPL": "P2"
   status: "Ready for enrichment"
   account_id_prefix: "HAIA-FIN-"
 

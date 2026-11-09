@@ -6,6 +6,7 @@ from .rules import d3_offer
 
 DAY_TITLE = {"D1": "День 1 · Email", "D1-2": "День 1–2 · LinkedIn-заметка",
              "D3": "День 3 · Email в том же треде", "D5": "День 5 · Переадресация"}
+ROLE_RU = {"executor": "исполнитель", "owner": "владелец процесса", "nearest": "ближайший по смыслу"}
 TIER_RU = {"hook": "≤60 дн", "state": "61–270 дн", "context": "271–365 дн", "stale": "старше года", "invalid": "без даты"}
 
 
@@ -94,7 +95,7 @@ def card_blocks(st: AccountState) -> list[dict]:
     for pkg in st.packages:
         c = next(x for x in st.contacts if x.key == pkg.contact_key)
         B.append(h(f"{c.name} · {c.title}"))
-        B.append(p(f"{c.email or '—'} · уровень: {c.level} · цепочка с дня {c.start_day} · найден: {c.found_by}"))
+        B.append(p(f"{c.email or '—'} · ступень: {ROLE_RU.get(c.tier, c.tier or '—')} · цепочка с дня {c.start_day} · найден: {c.found_by}"))
         if c.linkedin:
             B.append(p("LinkedIn", link=c.linkedin))
         if plan:
@@ -125,7 +126,7 @@ def markdown_report(st: AccountState) -> str:
     if st.people_log:
         L += ["## Поиск людей"] + [f"- {x.method}: +{x.triggers_found}; исполнителей с email {x.triggers_usable} {x.note}"
                                    for x in st.people_log] + [""]
-    L += ["## Контакты"] + [f"- {c.name} · {c.title} · {c.level} · день {c.start_day} · {c.email or 'нет email'} · {c.found_by}"
+    L += ["## Контакты"] + [f"- {c.name} · {c.title} · {ROLE_RU.get(c.tier, c.tier or '—')} · день {c.start_day} · {c.email or 'нет email'} · {c.found_by}"
                             for c in st.contacts]
     L += [f"- тёплый путь: {w}" for w in st.warm_contacts] + [f"- пропущен: {s}" for s in st.skipped_contacts] + [""]
     if st.check_problems:

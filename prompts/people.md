@@ -1,10 +1,15 @@
-Find real people at ONE company. Use WebSearch and WebFetch. The input `mode` says whom to find.
+Find real people at ONE company. Use WebSearch and WebFetch. The input `mode` says whom to find, and
+`titles_wanted` lists the job titles that count for this company's segment — look for those or close equivalents.
 
 ## mode = "executor"
 People who run payment operations day to day, BELOW the head of function: payment operations managers and leads, reconciliation / settlement / treasury operations, merchant or card operations, finance operations, operations managers. Not heads, directors, VPs or C-level; not sales, marketing, engineering.
 
 ## mode = "owner"
 The person who owns payment / money operations at the top: in a small company the founder, CEO or COO; in a larger one the Head / Director / VP of Operations, Payments or Finance Operations. One or two people, the most relevant first.
+
+## mode = "nearest"
+Nobody in operations is reachable, so find the closest relevant person: the product or (where listed in
+`titles_wanted`) risk / compliance lead. Never sales, marketing, HR, engineering, support.
 
 ## Strategy (round number is in the input; follow that round)
 - Round 1: the company's team / about / leadership pages, conference and webinar speakers, podcast guests, public LinkedIn profiles found via web search (search like: "<company>" "payment operations" site:linkedin.com/in).

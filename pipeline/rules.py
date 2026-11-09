@@ -171,14 +171,84 @@ def contact_level(title: str) -> str:
     return "executor"
 
 
-def assign_schedule(contacts: list[Contact], band: str) -> list[Contact]:
-    """51+: исполнители с дня 1; руководители — с дня 3 (если есть исполнитель)."""
+# ---------- лестница ролей (§2, roles.yaml) ----------
+
+_ROLES: dict | None = None
+
+
+def roles() -> dict:
+    global _ROLES
+    if _ROLES is None:
+        import yaml
+        from pathlib import Path
+        _ROLES = yaml.safe_load((Path(__file__).resolve().parent.parent / "roles.yaml").read_text(encoding="utf-8"))
+    return _ROLES
+
+
+def _has(words: list[str], title: str) -> bool:
+    t = (title or "").lower()
+    return any(re.search(rf"(?<![a-z0-9]){re.escape(w.lower())}(?![a-z0-9])", t) for w in words)
+
+
+def segment_roles(segment: str) -> dict:
+    R = roles()
+    return R["segments"].get(segment) or R["default"]
+
+
+def role_tier(title: str, segment: str, band: str) -> str:
+    """executor / owner / nearest / '' (вне лестницы — не пишем). Правила — в шапке roles.yaml."""
+    R, seg = roles(), segment_roles(segment)
+    if not title or _has(R["exclude"], title):
+        return ""
+    if _has(R["ops_leaders"], title):
+        return "owner"
+    if _has(R["leaders_small"], title):
+        return "owner" if band == "small" else "nearest"
+    lvl, core = contact_level(title), _has(seg["core"], title)
+    if core:
+        return "executor" if lvl == "executor" else "owner"
+    if _has(seg["nearest"], title):
+        return "nearest"
+    return ""
+
+
+def nearest_titles(segment: str) -> list[str]:
     out = []
-    has_exec = any(contact_level(c.title) == "executor" for c in contacts)
+    for w in segment_roles(segment)["nearest"]:
+        out += [f"Head of {w.title()}", f"{w.title()} Manager"]
+    return out
+
+
+def pick_recipients(contacts: list[Contact], band: str, segment: str) -> tuple[list[Contact], list[str]]:
+    """Кому пишем: исполнители (цель по размеру) + один владелец процесса; нет владельца с email —
+    один «ближайший по смыслу». Возвращает (получатели со ступенью и днём старта, пропущенные с причиной)."""
+    tiered = [c.model_copy(update={"tier": role_tier(c.title, segment, band), "level": contact_level(c.title)})
+              for c in contacts]
+    skipped = [f"{c.name} ({c.title}) — роль вне лестницы" for c in tiered if not c.tier]
+    with_email = [c for c in tiered if c.tier and c.email]
+    execs = [c for c in with_email if c.tier == "executor"][:max(1, executors_target(band))]
+    owners = [c for c in with_email if c.tier == "owner"]
+    near = [c for c in with_email if c.tier == "nearest"]
+    senior = owners[:1] or near[:1]
+    chosen = execs + senior
+    for c in tiered:
+        if c.tier and c not in chosen:
+            skipped.append(f"{c.name} ({c.title}) — " + ("нет email" if not c.email else "не выбран: ступень уже занята"))
+    out = []
+    for c in chosen:
+        late = band in ("mid", "large", "unknown") and c.tier != "executor" and bool(execs)
+        out.append(c.model_copy(update={"start_day": 3 if late else 1}))
+    return out, skipped
+
+
+def assign_schedule(contacts: list[Contact], band: str, segment: str = "") -> list[Contact]:
+    """51+: исполнители с дня 1; владелец / ближайший — с дня 3 (если есть исполнитель)."""
+    has_exec = any(role_tier(c.title, segment, band) == "executor" for c in contacts)
+    out = []
     for c in contacts:
-        lvl = contact_level(c.title)
-        start = 3 if (band in ("mid", "large", "unknown") and lvl != "executor" and has_exec) else 1
-        out.append(c.model_copy(update={"level": lvl, "start_day": start}))
+        tier = role_tier(c.title, segment, band)
+        start = 3 if (band in ("mid", "large", "unknown") and tier != "executor" and has_exec) else 1
+        out.append(c.model_copy(update={"level": contact_level(c.title), "tier": tier, "start_day": start}))
     return out
 
 
@@ -186,13 +256,14 @@ def reachable(c: Contact) -> bool:
     return bool(c.email)
 
 
-def people_gate(contacts: list[Contact], band: str) -> tuple[bool, str]:
-    execs = [c for c in contacts if contact_level(c.title) == "executor" and reachable(c)]
+def people_gate(contacts: list[Contact], band: str, segment: str = "") -> tuple[bool, str]:
+    ladder = [c for c in contacts if role_tier(c.title, segment, band) and reachable(c)]
+    execs = [c for c in ladder if role_tier(c.title, segment, band) == "executor"]
     need = executors_needed(band)
     if len(execs) < need:
         return False, f"размер {band}: нужен минимум {need} исполнитель с email, найдено {len(execs)}"
-    if not any(reachable(c) for c in contacts):
-        return False, "нет ни одного контакта с email"
+    if not ladder:
+        return False, "нет ни одного подходящего по лестнице ролей контакта с email"
     return True, ""
 
 
