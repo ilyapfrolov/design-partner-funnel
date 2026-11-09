@@ -68,7 +68,7 @@ def test_congrats_only_for_fresh_hook():
     r = golden_research(g)
     plan = make_plan(r)
     pkg = ContactPackage.model_validate(g["packages"][0])
-    pkg.touches[0].body = pkg.touches[0].body.replace("I saw Nomod's", "Congrats on Nomod's")
+    pkg.touches[0].body = pkg.touches[0].body.replace("Since July, Nomod has offered", "Congrats, Nomod now offers")
     c = Contact.model_validate(g["contacts"][0])
     assert any("поздравление" in p for p in check_package(pkg, c, g["account"]["fact"], r, plan, SENDER))
 
@@ -116,10 +116,27 @@ def test_d3_must_use_unused_other_trigger():
     assert any("гипотеза B не допускается" in p for p in check_package(pkg, c, g["account"]["fact"], r, plan, SENDER))
 
 
-def test_embed_phrase_only_for_embed():
+@pytest.mark.parametrize("insert,needle", [
+    ("Under your brand. ", "встраивание"), ("From an export, no integration needed. ", "выгрузки"),
+    ("More money rides on every case that goes wrong. ", "негатив"),
+])
+def test_product_and_tone_rules(insert, needle):
     g, r, plan, pkg, c = _parts("nomod")
-    pkg.touches[0].body = pkg.touches[0].body.replace("From an export", "Under your brand. From an export")
-    assert any("только для PREBUILD" in p for p in check_package(pkg, c, g["account"]["fact"], r, plan, SENDER))
+    pkg.touches[0].body = pkg.touches[0].body.replace("My guess", insert + "My guess")
+    assert any(needle in p for p in check_package(pkg, c, g["account"]["fact"], r, plan, SENDER))
+
+
+def test_state_trigger_not_presented_as_news():
+    g, r, plan, pkg, c = _parts("nomod")                     # повод июля — «Состояние»
+    pkg.touches[0].body = pkg.touches[0].body.replace("Since July, Nomod has offered", "Nomod now offers")
+    assert any("Состояние" in p for p in check_package(pkg, c, g["account"]["fact"], r, plan, SENDER))
+
+
+def test_ending_call_variant_checked():
+    g, r, plan, pkg, c = _parts("hitpay")
+    pkg.ending_call = "Could we book a quick call next week?"
+    P = check_package(pkg, c, g["account"]["fact"], r, plan, SENDER)
+    assert any("20 минут" in p for p in P)
 
 
 def test_quote_matching_tolerates_typography():
@@ -153,7 +170,13 @@ class FakeRunner:
 
 
 def _docs_for(triggers):
-    return [Doc(source="news", url=t["url"], date=t["event_date"][:10], title="t", text=t["quote"]) for t in triggers]
+    return [Doc(source="news", url=t["url"], date=t["event_date"][:10], title="t",
+                text=t["quote"] + " " + t.get("company_statement", "")) for t in triggers]
+
+
+def _with_statements(triggers, company):
+    """Поводы из изданий получают дословную фразу компании (иначе — «unofficial»)."""
+    return [dict(t, company_statement=f"{company} announced it in a statement.") for t in triggers]
 
 
 def _state(g):
@@ -162,7 +185,7 @@ def _state(g):
 
 def test_round1_only_when_two_fresh_company_triggers(monkeypatch):
     g = G["hitpay"]
-    trig = g["research"]["triggers"]          # порядок сохраняется → id после перенумерации совпадают с эталоном
+    trig = _with_statements(g["research"]["triggers"], "HitPay")   # порядок сохраняется → id совпадают с эталоном
     runner = FakeRunner(extract=trig, packages=g["packages"])
     st = stages.research(_state(g), runner, CFG, TODAY, collector=lambda *a: _docs_for(trig))
     assert runner.seen == ["extract"] and st.status == "planned" and st.plan.d1_offer == "PREBUILD"
@@ -184,7 +207,7 @@ def test_all_three_rounds_before_hold(monkeypatch):
 
 def test_market_round_rescues_account(monkeypatch):
     monkeypatch.setattr(stages, "verify_quote", lambda url, quote: "verified")
-    m = [t for t in G["nextpay"]["research"]["triggers"] if t["type"] == "MARKET"]
+    m = [dict(t, company_statement=t["quote"]) for t in G["nextpay"]["research"]["triggers"] if t["type"] == "MARKET"]
     st = stages.research(_state(G["nextpay"]), FakeRunner(market=m), CFG, TODAY, collector=lambda *a: [])
     assert st.status == "planned" and st.plan.cohort == "market" and st.plan.d1_offer == "BACKTEST"
 
@@ -267,3 +290,32 @@ def test_recipients_bottom_up_with_nearest_fallback():
     out, skipped = pick_recipients([ex, pm, head], "large", C3)
     assert [c.name for c in out] == ["A A", "D D"]                         # владелец есть — ближайший не нужен
     assert any("B B" in s and "ступень уже занята" in s for s in skipped)
+
+
+# ---------- первоисточник повода ----------
+
+from pipeline.rules import source_kind, statement_attributed  # noqa: E402
+
+
+@pytest.mark.parametrize("url,exp", [
+    ("https://help.qashio.com/en/articles/1", "company"), ("https://www.bsp.gov.ph/news/x", "regulator"),
+    ("https://www.mas.gov.sg/news", "regulator"), ("https://newsbytes.ph/2026/10/16/x", "press"),
+])
+def test_source_kind(url, exp):
+    assert source_kind(url, "https://qashio.com", ["mas.gov.sg"]) == exp
+
+
+def test_press_needs_company_statement():
+    assert statement_attributed('Armin Moradi said: "If the money has to be sent anyway…"', ["Qashio"])
+    assert statement_attributed("Qashio has launched Global Pay", ["Qashio"])
+    assert not statement_attributed("Balances will be converted next month.", ["Traxion Pay"])
+    assert not statement_attributed("", ["Qashio"])
+
+
+def test_retelling_without_statement_is_unofficial(monkeypatch):
+    monkeypatch.setattr(stages, "verify_quote", lambda url, quote: "verified")
+    g = json.loads(json.dumps(G["nomod"]))
+    g["account"]["domain"] = "https://nomod.com"
+    t = dict(g["research"]["triggers"][0], url="https://aggregator.example/nomod", company_statement="")
+    st = stages.research(_state(g), FakeRunner(deep=[t]), CFG, TODAY, collector=lambda *a: [])
+    assert st.research.triggers[0].verification == "unofficial" and st.status == "on_hold"

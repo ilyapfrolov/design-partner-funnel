@@ -61,7 +61,10 @@ class Trigger(BaseModel):
     ops_implication: str
     confidence: Literal["EVENT", "INTERPRETATION"]
     found_in_round: int = 0
-    verification: Literal["pending", "verified", "verified_llm", "not_found", "unreachable", "too_long"] = "pending"
+    verification: Literal["pending", "verified", "verified_llm", "not_found", "unreachable", "too_long",
+                          "unofficial"] = "pending"   # unofficial — пересказ без подтверждения самой компанией
+    source_kind: Literal["company", "regulator", "press", "unknown"] = "unknown"   # ставит код по домену url
+    company_statement: str = ""   # для press: дословная строка, где говорит сама компания / регулятор
     tier: Tier = "invalid"        # ставит код по дате
 
 

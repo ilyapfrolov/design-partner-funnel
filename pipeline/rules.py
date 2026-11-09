@@ -59,6 +59,42 @@ STATE_WORDS = re.compile(r"\b(saw|just|now|new|recently)\b", re.I)   # для «
 CONGRATS = re.compile(r"\bcongrat", re.I)
 
 
+# ---------- первоисточник повода (§3, решение Ильи 9 Nov 2026) ----------
+# Повод засчитывается, только если его можно проследить до самой компании (её сайт, справка, блог,
+# официальный релиз) или регулятора. Издание — только если в нём прямо говорит компания / регулятор:
+# дословная строка (company_statement) с атрибуцией. Пересказы и агрегаторы не считаются.
+
+GOV = re.compile(r"(^|\.)gov(\.[a-z]{2})?$|\.gov\.[a-z]{2}$|\.go\.[a-z]{2}$")
+ATTRIBUTION = re.compile(r"\b(said|says|announced|announces|according to|statement|told|spokesperson|"
+                         r"press release|mandates?|requires?|circular|regulation)\b", re.I)
+
+
+def site_of(url_or_domain: str) -> str:
+    d = re.sub(r"^https?://", "", (url_or_domain or "").strip().lower()).split("/")[0].split(":")[0]
+    d = d[4:] if d.startswith("www.") else d
+    parts = d.split(".")
+    if len(parts) >= 3 and parts[-2] in ("com", "co", "net", "org", "gov", "ac", "go") and len(parts[-1]) == 2:
+        return ".".join(parts[-3:])
+    return ".".join(parts[-2:]) if len(parts) >= 2 else d
+
+
+def source_kind(url: str, company_domain: str, regulator_domains: list[str]) -> str:
+    host = re.sub(r"^https?://", "", (url or "").lower()).split("/")[0]
+    if company_domain and site_of(url) == site_of(company_domain):
+        return "company"
+    if site_of(url) in {site_of(d) for d in regulator_domains} or GOV.search(host):
+        return "regulator"
+    return "press"
+
+
+def statement_attributed(statement: str, entity_names: list[str]) -> bool:
+    """Строка из издания должна быть словами компании / регулятора: атрибуция или имя самой организации."""
+    if not statement.strip():
+        return False
+    low = statement.lower()
+    return bool(ATTRIBUTION.search(statement)) or any(n and n.lower() in low for n in entity_names)
+
+
 # ---------- даты и уровни свежести ----------
 
 def parse_event_date(s: str) -> date | None:

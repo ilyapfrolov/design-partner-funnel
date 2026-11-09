@@ -127,7 +127,13 @@ models:                      # алиасы Claude Code; работает на �
 research:
   collect_days: 270          # окно сбора корпуса; в письмо идут только события ≤270 дней (SPEC §3)
   max_quote_words: 25
-  llm_verify_fallback: true  # сайт закрыт для кода → проверка цитаты через WebFetch, пометка verified_llm
+  llm_verify_fallback: true
+  # Первоисточник повода (SPEC §3): сайт компании или регулятора; издание — только с дословной фразой компании.
+  # Домены *.gov.* / *.go.* считаются регулятором автоматически; остальные регуляторы — здесь.
+  regulator_domains: [mas.gov.sg, bsp.gov.ph, bir.gov.ph, centralbank.ae, dfsa.ae, vara.ae, adgm.com,
+                      sama.gov.sa, qcb.gov.qa, cbb.gov.bh, cbo.gov.om, bnm.gov.my, bi.go.id, ojk.go.id,
+                      bot.or.th, sbv.gov.vn, fca.org.uk, ecb.europa.eu, esma.europa.eu, rbi.org.in,
+                      cbn.gov.ng, centralbank.go.ke, resbank.co.za, bcb.gov.br, banxico.org.mx]  # сайт закрыт для кода → проверка цитаты через WebFetch, пометка verified_llm
 
 sender:
   name: "Ilia Frolov"

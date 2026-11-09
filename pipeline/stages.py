@@ -19,7 +19,7 @@ from .models import (Account, AccountState, Contact, ExtractResult, PeopleResult
 from .notion import Notion, plain, relation_ids, text_prop
 from .providers import OWNER_TITLES, Findymail
 from .render import card_blocks, card_title
-from .rules import (apply_tiers, check_package, contact_level, executors_target, make_plan, nearest_titles,
+from .rules import (apply_tiers, source_kind, statement_attributed, check_package, contact_level, executors_target, make_plan, nearest_titles,
                     people_gate, pick_recipients, role_tier, segment_roles, size_band, usable_triggers, words)
 from .verify import fetch_text, quote_in_text, verify_quote
 
@@ -186,7 +186,7 @@ def _company_usable(r: Research) -> list[Trigger]:
 
 
 def _absorb(r: Research, res: ExtractResult, rnd: int, verify: Callable[[Trigger], str], today: date,
-            max_words: int) -> int:
+            max_words: int, account: Account | None = None, regulators: list[str] | None = None) -> int:
     known = {t.url + "|" + t.quote for t in r.triggers}
     added = 0
     for t in res.triggers:
@@ -194,6 +194,15 @@ def _absorb(r: Research, res: ExtractResult, rnd: int, verify: Callable[[Trigger
             continue
         t.found_in_round = rnd
         t.verification = "too_long" if words(t.quote) > max_words else verify(t)
+        if account is not None and t.verification in ("verified", "verified_llm"):
+            t.source_kind = source_kind(t.url, account.domain, regulators or [])
+            if t.source_kind == "press":
+                # издание засчитывается, только если в нём дословно говорит сама компания / регулятор
+                stmt = t.model_copy(update={"quote": t.company_statement})
+                ok = statement_attributed(t.company_statement, [account.company]) and \
+                    verify(stmt) in ("verified", "verified_llm")
+                if not ok:
+                    t.verification = "unofficial"
         r.triggers.append(t)
         added += 1
     if not r.process_a and res.process_a:
@@ -224,7 +233,7 @@ def research(st: AccountState, runner: Runner, cfg: dict, today: date,
             "today": today.isoformat(), "account": acc,
             "documents": [d.model_dump() for d in docs]}),
             ExtractResult, model=cfg["models"]["research"], timeout=cfg["timeouts"]["research_sec"])
-        log.triggers_found = _absorb(r, res, 1, lambda t: _verify_against_docs(t, by_url), today, maxw)
+        log.triggers_found = _absorb(r, res, 1, lambda t: _verify_against_docs(t, by_url), today, maxw, st.account, rc.get('regulator_domains', []))
     else:
         log.note = "корпус пуст"
     log.triggers_usable = len(_company_usable(r))
@@ -237,7 +246,7 @@ def research(st: AccountState, runner: Runner, cfg: dict, today: date,
             "already_known_urls": sorted({t.url for t in r.triggers} | set(by_url))}),
             ExtractResult, model=cfg["models"]["research"], tools=["WebSearch", "WebFetch"],
             timeout=cfg["timeouts"]["research_sec"])
-        found = _absorb(r, res, 2, lambda t: _verify_web(t, runner, cfg), today, maxw)
+        found = _absorb(r, res, 2, lambda t: _verify_web(t, runner, cfg), today, maxw, st.account, rc.get('regulator_domains', []))
         r.rounds.append(RoundLog(round=2, method="углубление: региональная пресса, партнёры, конференции, посты, реестры",
                                  triggers_found=found, triggers_usable=len(_company_usable(r))))
 
@@ -249,7 +258,7 @@ def research(st: AccountState, runner: Runner, cfg: dict, today: date,
             timeout=cfg["timeouts"]["research_sec"])
         for t in res.triggers:
             t.type = "MARKET"
-        found = _absorb(r, res, 3, lambda t: _verify_web(t, runner, cfg), today, maxw)
+        found = _absorb(r, res, 3, lambda t: _verify_web(t, runner, cfg), today, maxw, st.account, rc.get('regulator_domains', []))
         r.rounds.append(RoundLog(round=3, method="рыночный повод: регулятор, рельсы, дедлайны",
                                  triggers_found=found, triggers_usable=len(usable_triggers(r))))
 
@@ -459,7 +468,8 @@ def review(st: AccountState, runner: Runner, cfg: dict) -> AccountState:
     def _review() -> ReviewResult:
         return call_json(runner, _prompt("review.md", {
             "company": st.account.company, "country": st.account.country,
-            "verified_triggers": [t.model_dump(include={"id", "type", "event_date", "tier", "summary", "quote", "url"})
+            "verified_triggers": [t.model_dump(include={"id", "type", "event_date", "tier", "summary", "quote", "url",
+                                                        "source_kind", "company_statement"})
                                   for t in usable_triggers(st.research)],
             "plan": st.plan.model_dump(), "packages": [p.model_dump() for p in st.packages]}),
             ReviewResult, model=cfg["models"]["review"], timeout=cfg["timeouts"]["review_sec"])
