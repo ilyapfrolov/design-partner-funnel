@@ -2,14 +2,20 @@
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, datetime
 
 from .models import Contact, ContactPackage, Plan, Research, Trigger
 
 # §4 — повод → оффер
-OFFER_BY_TRIGGER = {"BUILDING": "EMBED", "CHANGE": "BACKTEST", "SCALE": "REPLAY"}
-TRIGGER_PRIORITY = {"BUILDING": 0, "CHANGE": 1, "SCALE": 2}
+OFFER_BY_TRIGGER = {"BUILDING": "EMBED", "CHANGE": "BACKTEST", "SCALE": "REPLAY", "MARKET": "BACKTEST"}
+TRIGGER_PRIORITY = {"BUILDING": 0, "CHANGE": 1, "SCALE": 2, "MARKET": 3}
 VERIFIED = {"verified", "verified_llm"}
+
+# §3 — свежесть
+HOOK_DAYS = 60          # можно открывать письмо и поздравлять
+STATE_DAYS = 270        # можно опираться как на текущее состояние, без поздравлений
+CONTEXT_DAYS = 365      # только фон в отчёте, в письмо не идёт
+MARKET_FUTURE_DAYS = 120  # рыночный дедлайн в будущем не дальше этого
 
 # §6 — лимиты
 D1_MAX_WORDS = 180
@@ -18,7 +24,6 @@ D5_MAX_WORDS = 45
 LINKEDIN_MAX_CHARS = 200
 SUBJECT_WORDS = (1, 6)
 
-# §6 — обязательные фразы дня 1
 D1_REQUIRED = [
     "my guess",
     "we have the base in place",
@@ -26,7 +31,7 @@ D1_REQUIRED = [
     "from an export, no integration needed",
 ]
 
-# §5 — запрещено в теле (регулярки, регистр не важен)
+# §5 — запрещено в теле (регистр не важен)
 FORBIDDEN = [
     (r"\bhaia\b", "название HAIA в теле письма"),
     (r"help us (build|shape|create)", "просьба «помогите нам»"),
@@ -45,44 +50,71 @@ FORBIDDEN = [
     (r"\b(you (don't|do not) have|lacks?|falls? short|struggl(e|es|ing) with)\b", "утверждение о слабости компании"),
     (r"\b(unlike|better than|outperforms?)\b", "сравнение с конкурентами"),
 ]
+CONGRATS = re.compile(r"\bcongrat", re.I)
 
 
-# ---------- даты и поводы ----------
+# ---------- даты и уровни свежести ----------
 
 def parse_event_date(s: str) -> date | None:
-    s = (s or "").strip()
     for fmt in ("%Y-%m-%d", "%Y-%m"):
         try:
-            from datetime import datetime
-            d = datetime.strptime(s, fmt).date()
-            return d
+            return datetime.strptime((s or "").strip(), fmt).date()
         except ValueError:
             continue
     return None
 
 
-def is_fresh(t: Trigger, today: date, days: int) -> bool:
+def tier(t: Trigger, today: date) -> str:
     d = parse_event_date(t.event_date)
-    return d is not None and 0 <= (today - d).days <= days
+    if d is None:
+        return "invalid"
+    age = (today - d).days
+    if age < 0:
+        return "hook" if (t.type == "MARKET" and -age <= MARKET_FUTURE_DAYS) else "invalid"
+    if age <= HOOK_DAYS:
+        return "hook"
+    if age <= STATE_DAYS:
+        return "state"
+    if age <= CONTEXT_DAYS:
+        return "context"
+    return "stale"
+
+
+def apply_tiers(r: Research, today: date) -> Research:
+    for t in r.triggers:
+        t.tier = tier(t, today)
+    return r
 
 
 def usable_triggers(r: Research) -> list[Trigger]:
-    return [t for t in r.triggers if t.verification in VERIFIED]
+    """В письмо идут только проверенные поводы уровня hook или state."""
+    return [t for t in r.triggers if t.verification in VERIFIED and t.tier in ("hook", "state")]
 
 
-def sort_triggers(ts: list[Trigger]) -> list[Trigger]:
-    return sorted(ts, key=lambda t: (TRIGGER_PRIORITY[t.type], -(parse_event_date(t.event_date) or date.min).toordinal()))
+def _recency(t: Trigger) -> int:
+    return -(parse_event_date(t.event_date) or date.min).toordinal()
 
 
 def make_plan(r: Research) -> Plan | None:
-    """§4: основной повод и допустимые основания дня 3. None — нет проверенных поводов."""
-    ts = sort_triggers(usable_triggers(r))
-    if not ts:
+    """§4. Оффер — по типу среди проверенных поводов ≤270 дней (компания важнее рынка).
+    Зацепка — сам повод оффера, если он свежий (≤60 дней), иначе самый свежий повод ≤60 дней,
+    иначе повод оффера в формулировке «текущее состояние»."""
+    us = usable_triggers(r)
+    company = [t for t in us if t.type != "MARKET"]
+    pool, cohort = (company, "company") if company else ([t for t in us if t.type == "MARKET"], "market")
+    if not pool:
         return None
-    primary = ts[0]
+    primary = sorted(pool, key=lambda t: (TRIGGER_PRIORITY[t.type], _recency(t)))[0]
+    if primary.tier == "hook":
+        hook = primary
+    else:
+        fresh = sorted([t for t in us if t.tier == "hook"], key=lambda t: (t.type == "MARKET", _recency(t)))
+        hook = fresh[0] if fresh else primary
     d1_offer = OFFER_BY_TRIGGER[primary.type]
-    d3 = {t.id: OFFER_BY_TRIGGER[t.type] for t in ts if t.type != primary.type}
-    return Plan(primary_trigger_id=primary.id, d1_offer=d1_offer, d3_options=d3, d3_fallback_offer=d1_offer)
+    d3 = {t.id: OFFER_BY_TRIGGER[t.type] for t in us
+          if t.type != primary.type and t.id != hook.id and OFFER_BY_TRIGGER[t.type] != d1_offer}
+    return Plan(cohort=cohort, primary_trigger_id=primary.id, hook_trigger_id=hook.id,
+                hook_tier=hook.tier, d1_offer=d1_offer, d3_options=d3, d3_fallback_offer=d1_offer)
 
 
 def d3_offer(plan: Plan, basis: str) -> str:
@@ -90,40 +122,45 @@ def d3_offer(plan: Plan, basis: str) -> str:
 
 
 def check_d3_basis(plan: Plan, pkg: ContactPackage) -> list[str]:
-    """День 3: повод другого типа, не упомянутый в дне 1; если такой есть — B запрещено."""
-    problems = []
-    if plan.primary_trigger_id not in pkg.d1_trigger_ids:
-        problems.append(f"день 1 должен опираться на основной повод {plan.primary_trigger_id}")
+    P = []
+    for need in {plan.primary_trigger_id, plan.hook_trigger_id}:
+        if need not in pkg.d1_trigger_ids:
+            P.append(f"день 1 должен опираться на повод {need}")
     unused = [tid for tid in plan.d3_options if tid not in pkg.d1_trigger_ids]
     if pkg.d3_basis == "B":
         if unused:
-            problems.append(f"день 3: есть неиспользованный повод другого типа {unused[0]} — гипотеза B не допускается")
+            P.append(f"день 3: есть неиспользованный повод {unused[0]} с другим оффером — гипотеза B не допускается")
     elif pkg.d3_basis not in plan.d3_options:
-        problems.append(f"день 3: основание {pkg.d3_basis} недопустимо (нужен повод другого типа или B)")
+        P.append(f"день 3: основание {pkg.d3_basis} недопустимо")
     elif pkg.d3_basis in pkg.d1_trigger_ids:
-        problems.append(f"день 3: повод {pkg.d3_basis} уже упомянут в дне 1")
-    return problems
+        P.append(f"день 3: повод {pkg.d3_basis} уже упомянут в дне 1")
+    return P
 
 
 # ---------- размер и уровни контактов (§2) ----------
 
 def size_band(size: str) -> str:
-    """small (≤50) / mid (51–200) / large (>200) / unknown. Берём верхнюю границу первого диапазона."""
-    s = (size or "").replace(",", "").replace(" ", "")
-    nums = [int(n) for n in re.findall(r"\d+", s)]
+    s = (size or "").replace(",", "")
+    nums = re.findall(r"\d+", s)
     if not nums:
         return "unknown"
     m = re.search(r"(\d+)\s*[–—-]\s*(\d+)", s)
-    top = int(m.group(2)) if m else nums[0]
-    if top <= 50:
-        return "small"
-    if top <= 200:
-        return "mid"
-    return "large"
+    top = int(m.group(2)) if m else int(nums[0])
+    return "small" if top <= 50 else "mid" if top <= 200 else "large"
 
 
-LEADER = re.compile(r"\b(founder|co-?founder|ceo|coo|cxo|chief|president|managing director)\b", re.I)
-HEAD = re.compile(r"\b(head|director|vp|vice president|svp|evp|lead)\b", re.I)
+def executors_needed(band: str) -> int:
+    """Снизу вверх обязательно: 51–200 — минимум 1 исполнитель, 200+ — минимум 1 (цель 2).
+    Неизвестный размер считаем средним."""
+    return 0 if band == "small" else 1
+
+
+def executors_target(band: str) -> int:
+    return 0 if band == "small" else 2 if band == "large" else 1
+
+
+LEADER = re.compile(r"\b(founder|co-?founder|ceo|coo|cxo|cfo|cto|chief|president|managing director)\b", re.I)
+HEAD = re.compile(r"\b(head|director|vp|vice president|svp|evp)\b", re.I)
 
 
 def contact_level(title: str) -> str:
@@ -135,23 +172,36 @@ def contact_level(title: str) -> str:
 
 
 def assign_schedule(contacts: list[Contact], band: str) -> list[Contact]:
-    """Крупные: исполнители с дня 1, руководители с дня 3 (если есть исполнитель)."""
+    """51+: исполнители с дня 1; руководители — с дня 3 (если есть исполнитель)."""
     out = []
     has_exec = any(contact_level(c.title) == "executor" for c in contacts)
     for c in contacts:
         lvl = contact_level(c.title)
-        start = 3 if (band == "large" and lvl != "executor" and has_exec) else 1
+        start = 3 if (band in ("mid", "large", "unknown") and lvl != "executor" and has_exec) else 1
         out.append(c.model_copy(update={"level": lvl, "start_day": start}))
     return out
 
 
+def reachable(c: Contact) -> bool:
+    return bool(c.email)
+
+
+def people_gate(contacts: list[Contact], band: str) -> tuple[bool, str]:
+    execs = [c for c in contacts if contact_level(c.title) == "executor" and reachable(c)]
+    need = executors_needed(band)
+    if len(execs) < need:
+        return False, f"размер {band}: нужен минимум {need} исполнитель с email, найдено {len(execs)}"
+    if not any(reachable(c) for c in contacts):
+        return False, "нет ни одного контакта с email"
+    return True, ""
+
+
 # ---------- проверка текстов (§8, код) ----------
 
-def _strip_signature(body: str, sender_lines: list[str]) -> str:
+def _strip_signature(body: str, sig: list[str]) -> str:
     lines = body.rstrip().splitlines()
-    tail = [l.strip() for l in lines[-len(sender_lines):]] if sender_lines else []
-    if sender_lines and tail == sender_lines:
-        lines = lines[: -len(sender_lines)]
+    if sig and [l.strip() for l in lines[-len(sig):]] == sig:
+        lines = lines[: -len(sig)]
     return "\n".join(lines).rstrip()
 
 
@@ -178,17 +228,14 @@ def check_package(pkg: ContactPackage, contact: Contact, account_fact: str, rese
             P.append(f"нет касания {need}")
     if P:
         return P
-
     P += check_d3_basis(plan, pkg)
 
-    known_numbers = set()
+    known = set()
     for t in usable_triggers(research):
-        known_numbers |= numbers_in(t.quote) | numbers_in(t.summary)
-    known_numbers |= numbers_in(account_fact)
+        known |= numbers_in(t.quote) | numbers_in(t.summary)
+    known |= numbers_in(account_fact)
 
     first = (contact.name.split() or [""])[0]
-    expect_embed = {"D1": plan.d1_offer == "EMBED", "D3": d3_offer(plan, pkg.d3_basis) == "EMBED"}
-
     for day, t in by_day.items():
         if t.channel == "email":
             sig = full_sig if day == "D1" else short_sig
@@ -198,14 +245,15 @@ def check_package(pkg: ContactPackage, contact: Contact, account_fact: str, rese
         else:
             text = t.body.strip()
         low = text.lower()
-
         for rx, why in FORBIDDEN:
-            if re.search(rx, text, re.I):
-                P.append(f"{day}: {why} ({re.search(rx, text, re.I).group(0)!r})")
-
-        extra = numbers_in(text + " " + t.subject) - known_numbers
+            m = re.search(rx, text, re.I)
+            if m:
+                P.append(f"{day}: {why} ({m.group(0)!r})")
+        extra = numbers_in(text + " " + t.subject) - known
         if extra:
             P.append(f"{day}: числа без источника: {sorted(extra)}")
+        if CONGRATS.search(text) and plan.hook_tier != "hook":
+            P.append(f"{day}: поздравление допустимо только с событием моложе {HOOK_DAYS} дней")
 
         if day == "D1":
             if t.channel != "email":
@@ -223,21 +271,20 @@ def check_package(pkg: ContactPackage, contact: Contact, account_fact: str, rese
             last = _paragraphs(text)[-1]
             if not last.endswith("?") or " or " not in last.lower():
                 P.append("D1: финал должен быть вопросом «A или ваш вариант» (с «or», заканчивается «?»)")
+            if plan.d1_offer == "EMBED" and "under your brand" not in low:
+                P.append("D1: оффер EMBED должен содержать «under your brand»")
         if day == "D1-2":
             if t.channel != "linkedin":
                 P.append("D1-2 должен быть linkedin")
             if len(text) > LINKEDIN_MAX_CHARS:
                 P.append(f"LinkedIn: {len(text)} знаков > {LINKEDIN_MAX_CHARS}")
+        if day in ("D3", "D5") and t.channel != "email":
+            P.append(f"{day} должен быть email")
         if day == "D3" and words(text) > D3_MAX_WORDS:
             P.append(f"D3: {words(text)} слов > {D3_MAX_WORDS}")
         if day == "D5" and words(text) > D5_MAX_WORDS:
             P.append(f"D5: {words(text)} слов > {D5_MAX_WORDS}")
-        if day in ("D3", "D5") and t.channel != "email":
-            P.append(f"{day} должен быть email")
-        if day in expect_embed:
-            has = "under your brand" in low or "under their brand" in low
-            if day == "D1" and expect_embed[day] and not has:
-                P.append("D1: оффер EMBED должен содержать «under your brand»")
-            if not expect_embed[day] and "under your brand" in low:
-                P.append(f"{day}: «under your brand» допустимо только для EMBED")
+        offer_here = plan.d1_offer if day in ("D1", "D1-2") else d3_offer(plan, pkg.d3_basis) if day == "D3" else None
+        if offer_here and offer_here != "EMBED" and "under your brand" in low:
+            P.append(f"{day}: «under your brand» допустимо только для EMBED")
     return P

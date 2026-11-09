@@ -11,6 +11,8 @@ FAIL types (any one of them → verdict FAIL):
 - `tone` — defensive, apologetic, flattering, salesy or bureaucratic; a list of product modules.
 - `favor_ask` — the ask is framed as helping us instead of what they get.
 - `negative` — refers to their problems, reviews, incidents or what they lack.
+- `stale_news` — congratulates on or presents as news an event that `verified_triggers` dates more than 60 days ago (`tier` is not `hook`).
+- `market_misfit` — a market event (`type` MARKET) is presented as news about the company, or it does not plausibly touch this company's money flows.
 
 Do not nitpick taste when no rule is broken. For each issue give the exact `excerpt` and a concrete `fix`.
 

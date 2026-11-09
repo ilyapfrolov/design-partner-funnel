@@ -30,6 +30,17 @@
     "ops_implication": "Visibility shows a payout went wrong; resolving stuck or returned payouts still needs the team.",
     "confidence": "EVENT",
     "verification": "verified"
+   },
+   {
+    "id": "t2",
+    "type": "MARKET",
+    "event_date": "2026-12-31",
+    "url": "https://www.fiscal-requirements.com/news/5869-philippines-sets-dec-31-2026-deadline-for-expanded-e-invoicing-mandate",
+    "quote": "mandates compliance by 31 December 2026 for large taxpayers and e-commerce",
+    "summary": "The Philippines BIR e-invoicing mandate requires large taxpayers and e-commerce businesses to comply by 31 December 2026, with invoice data reported within days of a transaction.",
+    "ops_implication": "Invoices paid by QR Ph or bank transfer but left unmatched become a compliance gap for NextPay's invoicing customers.",
+    "confidence": "EVENT",
+    "verification": "verified"
    }
   ],
   "coverage": {
@@ -39,40 +50,41 @@
    "people": "Aldrich: service designer, UXPH",
    "base": "invoice closing hypothesis"
   },
-  "process_a": "stuck or returned payouts after Track My Funds shows a problem",
-  "process_b": "closing an invoice after a QR Ph or bank transfer payment",
-  "notes": "CEO is Artie Lopez, CTO Don Pansacola; do not name them."
+  "process_a": "invoices paid by QR Ph or bank transfer that stay open",
+  "process_b": "returned or stuck payouts",
+  "notes": "NextPay sells NextInvoice (invoicing) and NextPayout. Own events older than 270 days. CEO Artie Lopez, CTO Don Pansacola — do not name them."
  },
  "expected": {
-  "d1_offer": "EMBED",
+  "d1_offer": "BACKTEST",
   "d3_basis": "B",
-  "d3_offer": "EMBED"
+  "d3_offer": "BACKTEST",
+  "cohort": "market"
  },
  "packages": [
   {
    "contact_key": "c1",
    "d1_trigger_ids": [
-    "t1"
+    "t2"
    ],
    "d3_basis": "B",
    "touches": [
     {
      "day": "D1",
      "channel": "email",
-     "subject": "after Track My Funds",
-     "body": "Hi Aldrich,\n\nCongrats on the KMC customer experience award, and on Track My Funds. Making payment visibility a product priority is the right instinct when a business can pay a whole payroll in one batch.\n\nMy guess is the hard part comes after visibility: a payout that's stuck or returned, where the business owner can see the problem but still needs someone on your team to explain and fix it.\n\nWe have the base in place: one case per payout with its full trail, flags when something drifts, and a suggested next step. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor NextPay, that could be the part that takes over when Track My Funds shows something wrong, inside your product and under your brand, tested first on a month of returned payouts. From an export, no integration needed.\n\nWorth testing on returned payouts, or is there another part of the product where this would matter more?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "subject": "invoices before 31 December",
+     "body": "Hi Aldrich,\n\nThe BIR e-invoicing deadline on 31 December puts large taxpayers and e-commerce sellers on structured invoices reported within days of a sale. For NextPay's invoicing customers, \"paid but the invoice is still open\" stops being an annoyance and becomes a compliance gap.\n\nMy guess is the hard cases aren't the invoices themselves but the payments around them: a QR Ph or bank transfer that arrives under a different reference, a partial payment, a refund.\n\nWe have the base in place: one case per invoice and payment with its full trail, flags when something drifts, and rules tested on past data before they go live. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor NextPay, that could start with replaying last month's invoices against a three-day closing rule. From an export, no integration needed.\n\nWorth trying on invoices, or would returned payouts be the better place to start?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
      "day": "D1-2",
      "channel": "linkedin",
      "subject": "",
-     "body": "Aldrich, congrats on the KMC CX award. I emailed you an idea about what happens after Track My Funds shows a payout went wrong. Would value your view."
+     "body": "Aldrich, with the BIR e-invoicing deadline on 31 December, I emailed you an idea for NextPay's invoicing side. Would value your view."
     },
     {
      "day": "D3",
      "channel": "email",
      "subject": "",
-     "body": "Hi Aldrich,\n\nAnother angle: closing an invoice with confidence. The pattern I'd expect is a customer who says they paid, a QR Ph or bank transfer that arrives later or under a different reference, and a business owner who can't tell whether the invoice is done.\n\nThe same layer could sit inside NextPay invoicing. We'd test it on a month of invoices: which ones stayed open after payment, and why.\n\nIs that a bigger pain for your customers than returned payouts?\n\nIlia"
+     "body": "Hi Aldrich,\n\nAnother angle: returned payouts. The pattern I'd expect is a payout that shows as sent while the supplier says it never arrived, and someone on your team piecing the story together across InstaPay, PESONet and the receiving bank.\n\nThe same test works there: replay a month of returned payouts and see which rule would have caught them earlier.\n\nIs that a bigger pain for your customers than invoices?\n\nIlia"
     },
     {
      "day": "D5",
@@ -82,5 +94,7 @@
     }
    ]
   }
- ]
+ ],
+ "as_of": "2026-11-09",
+ "approval": "Переписан под рыночный повод 9 Nov 2026 — ждёт одобрения Ильи"
 }

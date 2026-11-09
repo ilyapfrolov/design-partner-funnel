@@ -1,18 +1,17 @@
 # Скопируйте в config.yaml (он в .gitignore) и заполните.
-# Доступы здесь НЕ хранятся: токен Notion берётся из переменной окружения NOTION_TOKEN.
-# Токен выдаёт администратор корпоративного Notion (внутренняя интеграция с доступом
-# к базе аккаунтов, базе контактов и странице для карточек).
+# Доступы здесь НЕ хранятся. Переменные окружения:
+#   NOTION_TOKEN       — внутренняя интеграция корпоративного Notion (выдаёт администратор Notion)
+#   FINDYMAIL_API_KEY  — поиск исполнителей и email (необязательно; без ключа люди ищутся только в вебе,
+#                        а найденные без email уходят со статусом «нужно обогатить»)
+#   YOUTUBE_API_KEY    — YouTube Data API для корпуса (необязательно)
 
 notion:
   api_version: "2025-09-03"
-  # ID data source (не database). См. README → «Как найти ID».
   accounts_data_source_id: "REPLACE_ME"
   contacts_data_source_id: "REPLACE_ME"
-  # Страница, внутри которой пайплайн создаёт карточки аккаунтов.
-  output_parent_page_id: "REPLACE_ME"
+  output_parent_page_id: "REPLACE_ME"   # страница, внутри которой создаются карточки аккаунтов
 
-  # Названия полей базы аккаунтов (как в базе «HAIA — Buyer Discovery Accounts»).
-  accounts:
+  accounts:                              # база «HAIA — Buyer Discovery Accounts»
     company: "Компания"
     account_id: "Account ID"
     segment: "Сегмент"
@@ -27,44 +26,68 @@ notion:
     question: "Вопрос для квалификации"
     fallback: "Если гипотеза неинтересна"
     source: "Источник"
-    # Необязательные поля для записи результата. Если их нет в базе — оставьте пустыми.
-    funnel_status: ""      # select или text, например «Воронка — статус»
-    funnel_page: ""        # url, например «Воронка — карточка»
+    funnel_status: ""                    # необязательно: select «Воронка — статус»
+    funnel_page: ""                      # необязательно: url «Воронка — карточка»
 
-  # Названия полей базы контактов. Проверьте по реальной базе.
-  contacts:
-    company: "Компания"    # поле, по которому контакт связан с аккаунтом
-    company_match: "name"  # name — по названию компании; relation — если поле company это relation на базу аккаунтов
-    name: "Имя"
-    title: "Должность"
-    function: "Функция"    # select: Operations / CEO или основатель / Product / Risk / Payments ...
+  contacts:                              # база контактов (по скриншоту шапки 9 Nov 2026)
+    company: "Компания"                  # relation на базу аккаунтов
+    company_match: "relation"
+    name: "Имя"                          # title
+    title: "Роль"                        # text
+    function: "Персона"                  # select: Operations / CEO или основатель / Product / Risk / Payments …
     email: "Email"
     linkedin: "LinkedIn"
+    country: "Страна компании"           # rollup
+    warm_intro: "Тёплое интро через"     # заполнено → не в холодную цепочку, в карточке «тёплый путь»
+    defect: "Брак: причина"              # заполнено → контакт пропускается
+    status: "Статус"                     # status
+    source: "Источник"                   # select
+    write:
+      new_contact_function: "Operations"
+      new_contact_source: "Pipeline"           # select-опция создастся сама
+      status_needs_enrichment: "Нужно обогатить"  # ОПЦИЮ СТАТУСА НУЖНО СОЗДАТЬ ВРУЧНУЮ (API не создаёт опции status)
+      status_ready: "Готов"
+      # Поля эксперимента на строках контактов. Создайте их в базе (select / url / number) и впишите названия:
+      offer_type: ""        # select: EMBED / BACKTEST / REPLAY
+      trigger_type: ""      # select: BUILDING / CHANGE / SCALE / MARKET
+      cohort: ""            # select: company / market
+      confidence: ""        # select: EVENT / INTERPRETATION
+      card: ""              # url: карточка аккаунта
+      start_day: ""         # number: 1 или 3 (снизу вверх)
 
 selection:
   priorities: ["P1", "P2"]
   exclude_statuses: ["Research hold"]
   exclude_segments: ["ICP-8 P2P / crowdfunding — control"]
-  # Контакты каких функций берём. Остальные пропускаются и попадают в отчёт (SPEC.md §2).
   allowed_functions: ["Operations", "CEO или основатель", "Payments", "Finance"]
   require_contact: true
   batch_size: 20
   parallel: 3
 
-# Алиасы моделей Claude Code. Работает на подписке аккаунта, где выполнен `claude login`.
-models:
+gates:
+  min_trigger_rate: 0.7      # доля аккаунтов с проверенным поводом; ниже — письма не пишутся
+  min_people_rate: 0.7       # доля аккаунтов, где снизу вверх выполнимо; ниже — стоп
+  max_review_fail: 0.2       # доля отказов проверок/рецензента; выше — публикация останавливается
+  measure_accounts: 30
+  measure_segments:
+    - "ICP-1 PSP / acquiring"
+    - "ICP-2 Fintech / wallets / neobanks"
+    - "ICP-3 Cards / issuing / BaaS"
+    - "ICP-4 Cross-border / FX / PayFi"
+    - "ICP-5 Digital assets / crypto / RWA"
+    - "ICP-6 Investments / wealthtech"
+    - "ICP-7 Lending / credit / BNPL"
+
+models:                      # алиасы Claude Code; работает на подписке аккаунта, где выполнен `claude login`
   research: "sonnet"
   write: "sonnet"
   review: "sonnet"
   verify_fallback: "haiku"
 
 research:
-  freshness_days: 365
+  collect_days: 270          # окно сбора корпуса; в письмо идут только события ≤270 дней (SPEC §3)
   max_quote_words: 25
-  min_verified_triggers: 1
-  # Если сайт не отдаёт страницу коду (403, JS), разрешить проверку цитаты через WebFetch в Claude.
-  # Такие поводы помечаются verified_llm и видны в отчёте.
-  llm_verify_fallback: true
+  llm_verify_fallback: true  # сайт закрыт для кода → проверка цитаты через WebFetch, пометка verified_llm
 
 sender:
   name: "Ilia Frolov"

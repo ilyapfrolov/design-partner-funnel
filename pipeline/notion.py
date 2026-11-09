@@ -54,6 +54,10 @@ class Notion:
             self._req("PATCH", f"/blocks/{page['id']}/children", json={"children": blocks[i:i + 100]})
         return page
 
+    def create_row(self, data_source_id: str, props: dict) -> dict:
+        return self._req("POST", "/pages", json={
+            "parent": {"type": "data_source_id", "data_source_id": data_source_id}, "properties": props})
+
     def update_props(self, page_id: str, props: dict) -> None:
         self._req("PATCH", f"/pages/{page_id}", json={"properties": props})
 
@@ -78,6 +82,11 @@ def plain(prop: dict | None) -> str:
         return ",".join(x.get("id", "") for x in v or [])
     if t == "formula":
         return str((v or {}).get((v or {}).get("type"), "") or "")
+    if t == "rollup":
+        v = v or {}
+        if v.get("type") == "array":
+            return ", ".join(x for x in (plain(item) for item in v.get("array", [])) if x)
+        return str(v.get(v.get("type"), "") or "")
     return ""
 
 

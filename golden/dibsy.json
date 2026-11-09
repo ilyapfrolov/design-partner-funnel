@@ -57,7 +57,8 @@
  "expected": {
   "d1_offer": "EMBED",
   "d3_basis": "B",
-  "d3_offer": "EMBED"
+  "d3_offer": "EMBED",
+  "cohort": "company"
  },
  "packages": [
   {
@@ -94,5 +95,7 @@
     }
    ]
   }
- ]
+ ],
+ "as_of": "2026-11-09",
+ "approval": "Одобрено 9 Nov 2026"
 }

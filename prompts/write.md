@@ -20,7 +20,10 @@ NEVER: the name HAIA in the body (signature only) · customers, pilots, integrat
 - `REPLAY` — shadow replay of a month of one of their processes: which cases stalled, why, what would have closed them sooner.
 
 ## Day 1 · email (max 180 words without signature), exactly 5 paragraphs
-1. The trigger: the primary trigger (`plan.primary_trigger_id`) in your own words. You may mention other verified triggers as context.
+1. The trigger. Open with `plan.hook_trigger_id`; the offer is grounded in `plan.primary_trigger_id` (it may be the same trigger). Both must be in `d1_trigger_ids`.
+   - If `plan.hook_tier` is `hook` (event ≤60 days old) you may congratulate or say you saw it.
+   - If `plan.hook_tier` is `state` (61–270 days) NEVER congratulate and never present it as news; refer to it as the current state ("With CFO Stack now live…", "Now that payouts run on three schedules…").
+   - If `plan.cohort` is `market`, the opener is the market event and how it lands on this company; never pretend it is news about the company.
 2. The assumption, explicitly marked as a guess: starts with "My guess" — about `process_a`.
 3. Exactly this shape: "We have the base in place: <2–3 capabilities from the list, phrased for their process>. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess."
 4. The offer in 1–2 sentences: "For <Company>, that could <offer applied to their process> ..." For EMBED include "under your brand". End the paragraph with: "From an export, no integration needed."

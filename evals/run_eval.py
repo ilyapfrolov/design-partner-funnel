@@ -1,15 +1,17 @@
 """Регрессия на эталонных аккаунтах (SPEC.md §10).
 
-Офлайн: правила выбора оффера дают ожидаемый результат, одобренные тексты проходят все проверки кода.
+Офлайн: правила свежести и выбора оффера дают ожидаемый результат, одобренные тексты проходят все проверки кода.
 Live (--live): писатель и рецензент на эталонных исследованиях; сверка оффера, проверок и вердикта.
+Эталоны заморожены на дату `as_of` — уровни свежести считаются от неё.
 """
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 
 from pipeline.models import Account, AccountState, Contact, ContactPackage, Research
-from pipeline.rules import check_package, d3_offer, make_plan
+from pipeline.rules import apply_tiers, check_package, d3_offer, make_plan
 
 ROOT = Path(__file__).resolve().parent.parent
 GOLDEN = ROOT / "golden"
@@ -20,15 +22,21 @@ def load_golden() -> dict[str, dict]:
     return {f.stem: json.loads(f.read_text(encoding="utf-8")) for f in sorted(GOLDEN.glob("*.json"))}
 
 
+def golden_research(g: dict) -> Research:
+    return apply_tiers(Research.model_validate(g["research"]), date.fromisoformat(g["as_of"]))
+
+
 def offline_problems(g: dict, sender: dict = SENDER) -> list[str]:
-    r = Research.model_validate(g["research"])
+    r = golden_research(g)
     plan = make_plan(r)
     exp = g["expected"]
-    P = []
     if plan is None:
         return ["нет плана"]
+    P = []
     if plan.d1_offer != exp["d1_offer"]:
         P.append(f"оффер дня 1: {plan.d1_offer} ≠ {exp['d1_offer']}")
+    if plan.cohort != exp["cohort"]:
+        P.append(f"когорта: {plan.cohort} ≠ {exp['cohort']}")
     for raw in g["packages"]:
         pkg = ContactPackage.model_validate(raw)
         c = Contact.model_validate(g["contacts"][0] | {"key": pkg.contact_key})
@@ -46,15 +54,14 @@ def run(live: bool = False, cfg: dict | None = None, runner=None) -> int:
     for name, g in G.items():
         P = offline_problems(g)
         fails += bool(P)
-        lines.append(f"- офлайн {name}: {'PASS' if not P else 'FAIL — ' + '; '.join(P)}")
+        lines.append(f"- офлайн {name}: {'PASS' if not P else 'FAIL — ' + '; '.join(P)} · {g.get('approval', '')}")
     if live:
         from pipeline import stages
         for name, g in G.items():
             st = AccountState(account=Account.model_validate(g["account"]),
                               contacts=[Contact.model_validate(c) for c in g["contacts"]],
-                              research=Research.model_validate(g["research"]))
-            st.plan = make_plan(st.research)
-            st.status = "planned"
+                              research=golden_research(g))
+            st.plan, st.status = make_plan(st.research), "people_ok"
             try:
                 st = stages.write(st, runner, cfg)
                 if st.status == "written":
@@ -62,8 +69,7 @@ def run(live: bool = False, cfg: dict | None = None, runner=None) -> int:
             except Exception as e:  # noqa: BLE001
                 st.status, st.error = "error", str(e)[:300]
             pkg = st.packages[0] if st.packages else None
-            ok = (st.status == "ready" and pkg is not None
-                  and d3_offer(st.plan, pkg.d3_basis) == g["expected"]["d3_offer"])
+            ok = st.status == "ready" and pkg is not None and d3_offer(st.plan, pkg.d3_basis) == g["expected"]["d3_offer"]
             fails += not ok
             lines.append(f"- live {name}: {st.status} · оффер {st.plan.d1_offer} · день 3 {pkg.d3_basis if pkg else '—'}"
                          + (f" · проверки: {st.check_problems}" if st.check_problems else "")
