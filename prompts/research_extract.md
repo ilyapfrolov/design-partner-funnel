@@ -9,6 +9,8 @@ You extract outreach triggers for ONE company from a corpus that code has alread
 - `process_b` — a DIFFERENT operational process, preferably from the account `hypothesis` / `fallback` fields.
 - `notes` — anything the writer must be careful with (e.g. "they build reconciliation themselves").
 
+If `account.known_trigger` is filled, it is a lead someone already noted: check it first. It still needs a date, a verbatim quote and a URL like any other trigger, and the freshness rules apply.
+
 Return ONLY JSON:
 ```json
 {"triggers": [{"type": "...", "event_date": "...", "url": "...", "quote": "...", "summary": "...", "ops_implication": "...", "confidence": "EVENT"}],

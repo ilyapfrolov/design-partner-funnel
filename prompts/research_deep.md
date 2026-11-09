@@ -12,6 +12,8 @@ You do a DEEPER search for outreach triggers for ONE company. A first pass over 
 Do not return events whose URL is in `already_known_urls`.
 Prefer events from the last 60 days; never return events older than 270 days.
 
+If `account.known_trigger` is filled, it is a lead someone already noted: check it first. It still needs a date, a verbatim quote and a URL like any other trigger, and the freshness rules apply.
+
 Return ONLY JSON:
 ```json
 {"triggers": [{"type": "...", "event_date": "...", "url": "...", "quote": "...", "summary": "...", "ops_implication": "...", "confidence": "EVENT"}],

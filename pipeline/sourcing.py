@@ -142,7 +142,7 @@ def base_counts(rows: list[dict], seg_field: str, status_field: str, exclude_sta
     out: dict[str, int] = {}
     for p in rows:
         pr = p.get("properties", {})
-        if plain(pr.get(status_field)) in exclude_statuses:
+        if status_field and plain(pr.get(status_field)) in exclude_statuses:
             continue
         seg = plain(pr.get(seg_field))
         out[seg] = out.get(seg, 0) + 1
@@ -233,7 +233,7 @@ def source(cfg: dict, rows: list[dict], runner: Runner, today: date,
            limit: int | None = None) -> SourceRun:
     """limit — сколько компаний принять за прогон (пробный запуск); по умолчанию весь дефицит."""
     sc, fa = cfg["sourcing"], cfg["notion"]["accounts"]
-    counts = base_counts(rows, fa["segment"], fa["status"], sc.get("exclude_statuses", []))
+    counts = base_counts(rows, fa["segment"], fa.get("status", ""), sc.get("exclude_statuses", []))
     defs = deficits(counts, sc["targets"])
     run = SourceRun(today=today.isoformat(), base_counts=counts, deficits=defs)
 
@@ -323,15 +323,23 @@ def account_props(a: SourcedAccount, cfg: dict) -> dict:
              f"сегмент: {SEGMENT_RU[a.segment_confidence]} · размер: {SIZE_RU[a.size_check]} · "
              f"найдено через {a.found_via} (заход {a.round}; компания на странице: {a.source_named}). "
              f"Гипотеза и ценность не заполнялись: воронка исследует аккаунт сама.")
-    props = {fa["company"]: {"title": [{"type": "text", "text": {"content": a.company}}]},
+    if not fa.get("notes"):                   # нет поля заметок — пометки уходят в текст факта
+        fact = f"{fact} · {notes}"
+    dom_kind = fa.get("domain_kind", "url")
+    props = {fa["company"]: text_prop(a.company, "title"),
              fa["segment"]: {"select": {"name": a.segment}},
-             fa["priority"]: {"select": {"name": a.priority}},
-             fa["status"]: {"select": {"name": sc.get("status", "Ready for enrichment")}},
-             fa["size"]: text_prop(size, "rich_text"),
-             fa["domain"]: text_prop(a.domain, "url"),
-             fa["role"]: text_prop(a.owner_role, "rich_text"),
-             fa["fact"]: text_prop(fact, "rich_text"),
-             fa["source"]: text_prop(a.quote_url if a.quote_url.startswith("http") else a.found_via, "url")}
+             fa["domain"]: text_prop(a.domain if dom_kind == "url" else reg_domain(a.domain), dom_kind),
+             fa["fact"]: text_prop(fact, "rich_text")}
+    optional = {"priority": {"select": {"name": a.priority}},
+                "status": {"select": {"name": sc.get("status", "")}} if sc.get("status") else None,
+                "size": text_prop(size, "rich_text"),
+                "role": text_prop(a.owner_role, "rich_text"),
+                "country": {"select": {"name": a.country}} if a.country else None,
+                "source": ({"select": {"name": sc["source_option"]}} if sc.get("source_option")
+                           else text_prop(a.quote_url if a.quote_url.startswith("http") else a.found_via, "url"))}
+    for key, val in optional.items():
+        if fa.get(key) and val is not None:
+            props[fa[key]] = val
     if fa.get("account_id") and a.account_id:
         props[fa["account_id"]] = text_prop(a.account_id, "rich_text")
     if fa.get("size_source") and a.size_source.startswith("http"):

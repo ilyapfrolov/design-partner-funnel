@@ -11,27 +11,34 @@ notion:
   contacts_data_source_id: "REPLACE_ME"
   output_parent_page_id: "REPLACE_ME"   # страница, внутри которой создаются карточки аккаунтов
 
-  accounts:                              # база «HAIA — Buyer Discovery Accounts»
-    company: "Компания"
-    account_id: "Account ID"
-    segment: "Сегмент"
-    priority: "Приоритет"
-    status: "Статус"
-    size: "Размер"
-    domain: "Домен"
-    role: "Роль"
-    fact: "X — факт"
-    hypothesis: "Y — гипотеза"
-    value: "N — Ценность HAIA (Value Proposition)"
-    question: "Вопрос для квалификации"
-    fallback: "Если гипотеза неинтересна"
-    source: "Источник"
-    size_source: "Размер — источник"     # url; пишет этап source
-    notes: "Заметки"                     # пишет этап source
-    segment_confidence: ""               # необязательно: select «Сегмент — уверенность» (иначе пометка в «Заметки»)
-    size_status: ""                      # необязательно: select «Размер — уверенность»
-    funnel_status: ""                    # необязательно: select «Воронка — статус»
-    funnel_page: ""                      # необязательно: url «Воронка — карточка»
+  accounts:                              # корпоративная база «Компании» (по скриншоту 9 Nov 2026)
+    company: "Название"                  # title
+    domain: "Домен"                      # текст; ключ дедупа
+    domain_kind: "rich_text"             # Домен — текстовое поле (в личной базе было url)
+    segment: "Сегмент"                   # select ICP-1…8
+    country: "Страна"                    # select
+    fact: "Обоснование ICP"              # текст: что делает компания и почему в ICP
+    source: "Источник"                   # select: Apollo / Стартовая база / Pipeline
+    trigger: "Триггер"                   # текст: уже найденный повод — подсказка исследованию
+    trigger_url: "Ссылка на триггер"     # url
+    owner: "Owner"                       # people: заполнен → компания в работе, воронка не трогает
+    # Нужно добавить разработчику (пока пусто — воронка работает без них):
+    size: ""                             # «Размер» (текст): без него каждая компания считается средней
+    size_source: ""                      # «Размер — источник» (url)
+    funnel_status: ""                    # «Воронка — статус» (select): что воронка уже обработала
+    funnel_page: ""                      # «Воронка — карточка» (url)
+    # В корпоративной базе нет — не используются:
+    account_id: ""
+    priority: ""                         # приоритет выводится из сегмента (sourcing.priority_by_segment)
+    status: ""
+    role: ""
+    hypothesis: ""
+    value: ""
+    question: ""
+    fallback: ""
+    notes: ""                            # нет поля заметок → пометки уверенности пишутся в «Обоснование ICP»
+    segment_confidence: ""
+    size_status: ""
 
   contacts:                              # база контактов (по скриншоту шапки 9 Nov 2026)
     company: "Компания"                  # relation на базу аккаунтов
@@ -62,6 +69,8 @@ notion:
 
 selection:
   priorities: ["P1", "P2"]
+  skip_with_owner: true      # Owner назначается после подготовки батча; назначен — компанию не трогаем
+  skip_funnel_statuses: ["Черновик на ревью"]   # работает, когда появится поле «Воронка — статус»
   exclude_statuses: ["Research hold"]
   exclude_segments: ["ICP-8 P2P / crowdfunding — control"]
   allowed_functions: ["Operations", "CEO или основатель", "Payments", "Finance"]
@@ -105,7 +114,8 @@ sourcing:                    # этап source — наполнение базы
     "ICP-5 Digital assets / crypto / RWA": "P2"
     "ICP-6 Investments / wealthtech": "P2"
     "ICP-7 Lending / credit / BNPL": "P2"
-  status: "Ready for enrichment"
+  status: ""                 # в корпоративной базе нет поля статуса
+  source_option: "Pipeline"  # значение «Источник» для добавленных компаний (опция создастся сама)
   account_id_prefix: "HAIA-FIN-"
 
 models:                      # алиасы Claude Code; работает на подписке аккаунта, где выполнен `claude login`

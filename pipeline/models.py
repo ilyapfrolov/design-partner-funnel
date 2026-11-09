@@ -27,6 +27,10 @@ class Account(BaseModel):
     question: str = ""
     fallback: str = ""
     source: str = ""
+    owner: str = ""               # заполнен — компания уже в работе у человека, воронка не трогает
+    known_trigger: str = ""       # повод, уже записанный в базе (подсказка для исследования)
+    known_trigger_url: str = ""
+    funnel_status: str = ""
 
 
 class Contact(BaseModel):

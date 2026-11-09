@@ -78,6 +78,8 @@ def plain(prop: dict | None) -> str:
         return v or ""
     if t == "number":
         return "" if v is None else str(v)
+    if t == "people":
+        return ", ".join(x.get("name", "") or x.get("id", "") for x in v or [])
     if t == "relation":
         return ",".join(x.get("id", "") for x in v or [])
     if t == "formula":
@@ -97,7 +99,9 @@ def relation_ids(prop: dict | None) -> list[str]:
 
 
 def text_prop(value: str, kind: str) -> dict:
-    """Свойство для записи: select / rich_text / url."""
+    """Свойство для записи: select / rich_text / url / title."""
+    if kind == "title":
+        return {"title": [{"type": "text", "text": {"content": value[:200]}}]}
     if kind == "select":
         return {"select": {"name": value}}
     if kind == "url":

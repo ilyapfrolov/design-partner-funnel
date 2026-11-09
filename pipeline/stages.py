@@ -57,7 +57,14 @@ def _account_from_page(page: dict, f: dict) -> Account:
     return Account(page_id=page["id"].replace("-", ""), account_id=g("account_id"), company=g("company"),
                    segment=g("segment"), priority=g("priority"), status=g("status"), size=g("size"),
                    domain=g("domain"), role=g("role"), fact=g("fact"), hypothesis=g("hypothesis"),
-                   value=g("value"), question=g("question"), fallback=g("fallback"), source=g("source"))
+                   value=g("value"), question=g("question"), fallback=g("fallback"), source=g("source"),
+                   country=g("country"), owner=g("owner"), known_trigger=g("trigger"),
+                   known_trigger_url=g("trigger_url"), funnel_status=g("funnel_status"))
+
+
+def priority_of(a: Account, cfg: dict) -> str:
+    """Поле приоритета есть — берём его; нет — выводим из сегмента по документу ICP (sourcing.priority_by_segment)."""
+    return a.priority or cfg.get("sourcing", {}).get("priority_by_segment", {}).get(a.segment, "")
 
 
 def seen_accounts(runs_dir: Path) -> set[str]:
@@ -99,7 +106,11 @@ def select(cfg: dict, notion: Notion, runs_dir: Path, limit: int, only_ids: list
         else:
             if key in seen:
                 continue
-            if sel.get("priorities") and a.priority not in sel["priorities"]:
+            if sel.get("skip_with_owner", True) and a.owner:
+                continue                       # Owner назначается после подготовки; назначен — компания в работе
+            if a.funnel_status and a.funnel_status in sel.get("skip_funnel_statuses", []):
+                continue
+            if sel.get("priorities") and priority_of(a, cfg) not in sel["priorities"]:
                 continue
             if a.status in sel.get("exclude_statuses", []) or a.segment in sel.get("exclude_segments", []):
                 continue

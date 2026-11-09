@@ -141,3 +141,46 @@ def test_source_end_to_end():
 def test_limit_stops_early():
     res = source(CFG, ROWS, FakeRunner(), date(2026, 11, 9), fetch=fake_fetch, limit=1)
     assert len(res.accepted) == 1
+
+
+# ---------- корпоративные базы: «Компании» / «Диалоги» ----------
+
+def test_corporate_mapping_props():
+    import yaml
+    from pathlib import Path
+    cfg = yaml.safe_load((Path(__file__).resolve().parent.parent / "config.example.yaml").read_text(encoding="utf-8"))
+    from pipeline.sourcing import SourcedAccount
+    a = SourcedAccount(company="Acme", domain="https://acme.sg", segment=SEG3, region="SEA", country="Singapore",
+                       product_scope="Cards.", quote="", quote_url="", money_flow="settlement", size="",
+                       size_source="", size_check="unknown", segment_confidence="inferred", source_named="named",
+                       priority="P1", owner_role="Head of Cards", found_via="https://l/1", round=1)
+    p = account_props(a, cfg)
+    assert set(p) == {"Название", "Сегмент", "Домен", "Обоснование ICP", "Страна", "Источник"}
+    assert p["Домен"]["rich_text"][0]["text"]["content"] == "acme.sg"
+    assert p["Источник"] == {"select": {"name": "Pipeline"}}
+    assert "вывод по описанию" in p["Обоснование ICP"]["rich_text"][0]["text"]["content"]   # пометки — в текст
+
+
+def test_select_skips_owner_and_derives_priority(tmp_path):
+    import yaml
+    from pathlib import Path
+    from pipeline import stages
+    cfg = yaml.safe_load((Path(__file__).resolve().parent.parent / "config.example.yaml").read_text(encoding="utf-8"))
+    cfg["notion"]["accounts_data_source_id"], cfg["notion"]["contacts_data_source_id"] = "A", "C"
+    cfg["selection"]["priorities"] = ["P1"]
+    t = lambda v: {"type": "rich_text", "rich_text": [{"plain_text": v}]}
+
+    def comp(i, name, seg, owner=""):
+        return {"id": i, "properties": {
+            "Название": {"type": "title", "title": [{"plain_text": name}]}, "Домен": t(name.lower() + ".com"),
+            "Сегмент": {"type": "select", "select": {"name": seg}},
+            "Owner": {"type": "people", "people": [{"name": owner}] if owner else []}}}
+
+    class N:
+        def query(self, ds):
+            if ds == "A":
+                return [comp("1", "Free", SEG3), comp("2", "Taken", SEG3, owner="Kate"), comp("3", "Wealth", "ICP-6 Investments / wealthtech")]
+            return []
+
+    out = stages.select(cfg, N(), tmp_path, 10)
+    assert [s.account.company for s in out] == ["Free"]     # Taken — у Owner; Wealth — P2 по сегменту
