@@ -14,6 +14,9 @@ BASE = "https://app.findymail.com/api"
 EXEC_TITLES = ["Payment Operations Manager", "Payments Operations", "Reconciliation", "Settlement",
                "Finance Operations", "Treasury Operations", "Merchant Operations", "Operations Manager",
                "Card Operations", "Operations Lead"]
+# Владелец процесса: в малых компаниях — первый контакт, в средних и крупных — руководитель с дня 3.
+OWNER_TITLES = ["Founder", "Co-Founder", "CEO", "COO", "Chief Operating Officer", "Head of Operations",
+                "Head of Payments", "VP Operations", "Director of Operations", "Head of Finance"]
 
 
 class Findymail:

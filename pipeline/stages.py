@@ -17,7 +17,7 @@ from .llm import Runner, call_json
 from .models import (Account, AccountState, Contact, ExtractResult, PeopleResult, Research, ReviewResult,
                      RoundLog, Trigger, WriteResult)
 from .notion import Notion, plain, relation_ids, text_prop
-from .providers import Findymail
+from .providers import OWNER_TITLES, Findymail
 from .render import card_blocks, card_title
 from .rules import (apply_tiers, assign_schedule, check_package, contact_level, executors_target, make_plan,
                     people_gate, size_band, usable_triggers, words)
@@ -274,6 +274,8 @@ def _valid_web_candidate(c) -> bool:
 
 def people(st: AccountState, runner: Runner, cfg: dict, today: date, provider: Findymail | None = None,
            notion: Notion | None = None) -> AccountState:
+    """Снизу вверх: исполнители (цель по размеру) + владелец процесса, если его нет с email.
+    Владелец нужен всем: в малой компании это первый контакт, в средней и крупной — руководитель с дня 3."""
     band = size_band(st.account.size)
     target = executors_target(band)
     dom = _domain(st)
@@ -283,8 +285,12 @@ def people(st: AccountState, runner: Runner, cfg: dict, today: date, provider: F
     def execs() -> list[Contact]:
         return [c for c in st.contacts if contact_level(c.title) == "executor" and c.email]
 
-    def add(name: str, title: str, linkedin: str, source_url: str, found_by: str) -> bool:
-        if _norm(name) in known or contact_level(title) != "executor":
+    def owners() -> list[Contact]:
+        return [c for c in st.contacts if contact_level(c.title) != "executor" and c.email]
+
+    def add(name: str, title: str, linkedin: str, source_url: str, found_by: str, want: str) -> bool:
+        lvl = contact_level(title)
+        if not name or _norm(name) in known or (lvl == "executor") != (want == "executor"):
             return False
         email = ""
         if provider.enabled and dom:
@@ -294,38 +300,45 @@ def people(st: AccountState, runner: Runner, cfg: dict, today: date, provider: F
             except RuntimeError as err:
                 st.people_log.append(RoundLog(round=0, method="email-поставщик", note=str(err)))
         st.contacts.append(Contact(key=f"c{len(st.contacts) + 1}", name=name, title=title, linkedin=linkedin,
-                                   email=email, source_url=source_url, found_by=found_by, function="Operations"))
+                                   email=email, source_url=source_url, found_by=found_by,
+                                   function="Operations" if want == "executor" else ""))
         known.add(_norm(name))
         return True
 
-    rounds = []
-    if target and provider.enabled and dom:
-        rounds.append(("provider", "поставщик: сотрудники компании по должностям"))
+    # (кого ищем, способ, описание); заходы идут, пока цель не набрана
+    plan: list[tuple[str, str, str]] = []
     if target:
-        rounds += [("web1", "веб: команда, спикеры, подкасты, публичные профили"),
-                   ("web2", "веб: вакансии, цитаты в прессе, кейсы партнёров")]
+        if provider.enabled and dom:
+            plan.append(("executor", "provider", "поставщик: исполнители по должностям"))
+        plan += [("executor", "web1", "веб: команда, спикеры, подкасты, публичные профили"),
+                 ("executor", "web2", "веб: вакансии, цитаты в прессе, кейсы партнёров")]
+    if provider.enabled and dom:
+        plan.append(("owner", "provider", "поставщик: владелец процесса"))
+    plan.append(("owner", "web1", "веб: владелец процесса (сайт, пресса, профили)"))
 
-    for kind, method in rounds:
-        if len(execs()) >= target:
-            break
+    for want, kind, method in plan:
+        if (want == "executor" and len(execs()) >= target) or (want == "owner" and owners()):
+            continue
         added = 0
         if kind == "provider":
             try:
-                for e in provider.employees(dom):
-                    added += add(e.get("name", ""), e.get("jobTitle", ""), e.get("linkedinUrl", ""), "findymail", "provider")
+                titles = None if want == "executor" else OWNER_TITLES
+                for e in provider.employees(dom, titles):
+                    added += add(e.get("name", ""), e.get("jobTitle", ""), e.get("linkedinUrl", ""),
+                                 "findymail", "provider", want)
             except RuntimeError as err:
                 method += f" — {err}"
         else:
             res = call_json(runner, _prompt("people.md", {
-                "round": 1 if kind == "web1" else 2, "company": st.account.company, "domain": dom,
+                "mode": want, "round": 1 if kind == "web1" else 2, "company": st.account.company, "domain": dom,
                 "country": st.account.country, "already_known": sorted(c.name for c in st.contacts)}),
                 PeopleResult, model=cfg["models"]["research"], tools=["WebSearch", "WebFetch"],
                 timeout=cfg["timeouts"]["research_sec"])
             for c in res.candidates:
                 if _valid_web_candidate(c):
-                    added += add(c.name, c.title, c.linkedin_url, c.source_url, "web")
+                    added += add(c.name, c.title, c.linkedin_url, c.source_url, "web", want)
         st.people_log.append(RoundLog(round=len(st.people_log) + 1, method=method, triggers_found=added,
-                                      triggers_usable=len(execs())))
+                                      triggers_usable=len(execs()) if want == "executor" else len(owners())))
 
     st.contacts = assign_schedule(st.contacts, band)
     if notion is not None:
@@ -352,8 +365,9 @@ def write_new_contacts(st: AccountState, notion: Notion, cfg: dict) -> None:
             props[fc["linkedin"]] = {"url": c.linkedin}
         if c.email and fc.get("email"):
             props[fc["email"]] = {"email": c.email}
-        if fc.get("function") and w.get("new_contact_function"):
-            props[fc["function"]] = {"select": {"name": w["new_contact_function"]}}
+        func = w.get("new_leader_function") if contact_level(c.title) == "leader" else w.get("new_contact_function")
+        if fc.get("function") and func:
+            props[fc["function"]] = {"select": {"name": func}}
         if fc.get("source") and w.get("new_contact_source"):
             props[fc["source"]] = {"select": {"name": w["new_contact_source"]}}
         status = w.get("status_ready") if c.email else w.get("status_needs_enrichment")

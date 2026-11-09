@@ -209,3 +209,24 @@ def test_large_account_held_without_executor(monkeypatch):
     st = stages.people(st, runner, CFG, TODAY)
     assert st.status == "needs_people" and "исполнитель" in st.hold_reason
     assert runner.seen.count("people") == 2                 # оба веб-захода выполнены
+
+
+def test_new_account_without_contacts_searches_owner(monkeypatch):
+    """Аккаунт из этапа source: контактов нет. Малая компания → ищем владельца процесса."""
+    g = json.loads(json.dumps(G["nomod"]))
+    g["account"]["size"] = "11–50 (LinkedIn)"
+    g["account"]["domain"] = "https://nomod.com"
+    st = AccountState(account=Account.model_validate(g["account"]), contacts=[])
+    st.research = golden_research(g)
+    st.plan, st.status = make_plan(st.research), "planned"
+
+    class P:  # поставщик с email
+        enabled = True
+        def employees(self, dom, titles=None): return [{"name": "Omar Founder", "jobTitle": "Co-Founder & CEO", "linkedinUrl": ""}]
+        def find_email(self, n, d): return "omar@nomod.com"
+        def verify(self, e): return True
+
+    runner = FakeRunner()
+    st = stages.people(st, runner, CFG, TODAY, provider=P())
+    assert st.status == "people_ok" and st.contacts[0].title == "Co-Founder & CEO" and st.contacts[0].start_day == 1
+    assert runner.seen == []                                     # поставщик нашёл — веб не понадобился

@@ -1,5 +1,7 @@
 """Оркестратор воронки дизайн-партнёров.
 
+  python run.py source --batch 5 --dry-run     # наполнение базы: пробно 5 компаний, без записи в Notion
+  python run.py source                        # добрать весь дефицит по сегментам и записать в Notion
   python run.py measure                       # замер на 30 аккаунтах по сегментам: исследование + люди, без писем
   python run.py all --batch 20 --dry-run      # батч целиком, без записи в Notion
   python run.py all --batch 20                # батч с записью карточек и найденных людей в Notion
@@ -111,7 +113,7 @@ def segment_report(states: list[AccountState], g: dict) -> tuple[str, bool]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=["select", "research", "people", "write", "review", "publish",
+    ap.add_argument("stage", choices=["source", "select", "research", "people", "write", "review", "publish",
                                       "all", "measure", "recheck", "sample", "eval"])
     ap.add_argument("--run")
     ap.add_argument("--batch", type=int)
@@ -132,15 +134,37 @@ def main() -> int:
     today = date.today()
     RUNS.mkdir(exist_ok=True)
     notion = None
-    if not a.dry_run or a.stage in ("select", "all", "measure"):
+    if not a.dry_run or a.stage in ("select", "all", "measure", "source"):
         from pipeline.notion import Notion
         notion = Notion(cfg["notion"]["api_version"])
     write_notion = None if a.dry_run else notion
 
-    def new_run() -> Path:
-        run = RUNS / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    def new_run(prefix: str = "") -> Path:
+        run = RUNS / (prefix + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S"))
         run.mkdir()
         return run
+
+    if a.stage == "source":
+        from pipeline import sourcing
+        run = new_run("source-")
+        rows = notion.query(cfg["notion"]["accounts_data_source_id"])
+        out = run / "source.json"
+        partial: list = []
+
+        def keep(acc) -> None:
+            partial.append(acc.model_dump())
+            out.write_text(json.dumps({"accepted_so_far": partial}, ensure_ascii=False, indent=1), encoding="utf-8")
+            print(f"  + {acc.company} · {acc.segment} · {acc.country} · {acc.size}")
+
+        res = sourcing.source(cfg, rows, runner, today, on_accept=keep, limit=a.batch)
+        if write_notion is not None and res.accepted:
+            sourcing.write_accounts(res, rows, write_notion, cfg)
+        out.write_text(res.model_dump_json(indent=1), encoding="utf-8")
+        (run / "SOURCE.md").write_text(sourcing.report(res), encoding="utf-8")
+        print(f"\nПринято {len(res.accepted)}, отклонено {len(res.rejected)}. "
+              f"{'Записано в Notion.' if write_notion is not None else 'Notion не трогали (--dry-run).'} "
+              f"Отчёт: {run / 'SOURCE.md'}")
+        return 0
 
     if a.stage in ("select", "all", "measure"):
         run = new_run()

@@ -26,6 +26,8 @@ notion:
     question: "Вопрос для квалификации"
     fallback: "Если гипотеза неинтересна"
     source: "Источник"
+    size_source: "Размер — источник"     # url; пишет этап source
+    notes: "Заметки"                     # пишет этап source
     funnel_status: ""                    # необязательно: select «Воронка — статус»
     funnel_page: ""                      # необязательно: url «Воронка — карточка»
 
@@ -44,6 +46,7 @@ notion:
     source: "Источник"                   # select
     write:
       new_contact_function: "Operations"
+      new_leader_function: "CEO или основатель"   # найденный фаундер / CEO / COO
       new_contact_source: "Pipeline"           # select-опция создастся сама
       status_needs_enrichment: "Нужно обогатить"  # ОПЦИЮ СТАТУСА НУЖНО СОЗДАТЬ ВРУЧНУЮ (API не создаёт опции status)
       status_ready: "Готов"
@@ -60,7 +63,7 @@ selection:
   exclude_statuses: ["Research hold"]
   exclude_segments: ["ICP-8 P2P / crowdfunding — control"]
   allowed_functions: ["Operations", "CEO или основатель", "Payments", "Finance"]
-  require_contact: true
+  require_contact: false     # аккаунты без контактов тоже берём: людей находит этап people
   batch_size: 20
   parallel: 3
 
@@ -77,6 +80,23 @@ gates:
     - "ICP-5 Digital assets / crypto / RWA"
     - "ICP-6 Investments / wealthtech"
     - "ICP-7 Lending / credit / BNPL"
+
+sourcing:                    # этап source — наполнение базы (SPEC §12)
+  targets:                   # сколько аккаунтов должно быть в сегменте; добираем только дефицит
+    "ICP-3 Cards / issuing / BaaS": 45
+    "ICP-5 Digital assets / crypto / RWA": 45
+    "ICP-6 Investments / wealthtech": 45
+  regions:                   # регион → страны (варианты написания тоже, сверка без учёта регистра)
+    SEA: ["Singapore", "Indonesia", "Malaysia", "Thailand", "Philippines", "Vietnam", "Viet Nam", "Cambodia"]
+    GCC: ["United Arab Emirates", "UAE", "Saudi Arabia", "KSA", "Qatar", "Bahrain", "Kuwait", "Oman"]
+    LATAM_AFRICA: ["Brazil", "Mexico", "Colombia", "Argentina", "Chile", "Peru", "Nigeria", "Kenya",
+                   "South Africa", "Egypt", "Ghana", "Morocco"]
+  rounds: 3                  # заходы поиска на ячейку: реестры → рейтинги и каталоги → новости
+  per_call: 15
+  exclude_statuses: ["Research hold"]
+  priority: "P1"
+  status: "Ready for enrichment"
+  account_id_prefix: "HAIA-FIN-"
 
 models:                      # алиасы Claude Code; работает на подписке аккаунта, где выполнен `claude login`
   research: "sonnet"
