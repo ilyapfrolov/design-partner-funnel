@@ -47,7 +47,7 @@ def test_tiers(d, typ, exp):
 def test_offer_by_type_hook_by_freshness():
     r = apply_tiers(Research(triggers=[_t("t1", "BUILDING", "2026-04-30"), _t("t2", "SCALE", "2026-10-09")]), TODAY)
     p = make_plan(r)
-    assert (p.primary_trigger_id, p.d1_offer, p.hook_trigger_id, p.hook_tier) == ("t1", "EMBED", "t2", "hook")
+    assert (p.primary_trigger_id, p.d1_offer, p.hook_trigger_id, p.hook_tier) == ("t1", "PREBUILD", "t2", "hook")
 
 
 def test_old_event_never_used():
@@ -119,7 +119,7 @@ def test_d3_must_use_unused_other_trigger():
 def test_embed_phrase_only_for_embed():
     g, r, plan, pkg, c = _parts("nomod")
     pkg.touches[0].body = pkg.touches[0].body.replace("From an export", "Under your brand. From an export")
-    assert any("только для EMBED" in p for p in check_package(pkg, c, g["account"]["fact"], r, plan, SENDER))
+    assert any("только для PREBUILD" in p for p in check_package(pkg, c, g["account"]["fact"], r, plan, SENDER))
 
 
 def test_quote_matching_tolerates_typography():
@@ -165,7 +165,7 @@ def test_round1_only_when_two_fresh_company_triggers(monkeypatch):
     trig = g["research"]["triggers"]          # порядок сохраняется → id после перенумерации совпадают с эталоном
     runner = FakeRunner(extract=trig, packages=g["packages"])
     st = stages.research(_state(g), runner, CFG, TODAY, collector=lambda *a: _docs_for(trig))
-    assert runner.seen == ["extract"] and st.status == "planned" and st.plan.d1_offer == "EMBED"
+    assert runner.seen == ["extract"] and st.status == "planned" and st.plan.d1_offer == "PREBUILD"
     st = stages.people(st, runner, CFG, TODAY)          # small: исполнитель не обязателен
     assert st.status == "people_ok"
     st = stages.write(st, runner, CFG)

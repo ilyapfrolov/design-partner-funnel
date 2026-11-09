@@ -67,34 +67,41 @@
     "t2"
    ],
    "d3_basis": "B",
+   "ending_call": "Would 20 minutes be worth it to compare how customers close invoices today?",
    "touches": [
     {
-     "day": "D1",
+     "day": "D0",
      "channel": "email",
      "subject": "invoices before 31 December",
-     "body": "Hi Aldrich,\n\nThe BIR e-invoicing deadline on 31 December puts large taxpayers and e-commerce sellers on structured invoices reported within days of a sale. For NextPay's invoicing customers, \"paid but the invoice is still open\" stops being an annoyance and becomes a compliance gap.\n\nMy guess is the hard cases aren't the invoices themselves but the payments around them: a QR Ph or bank transfer that arrives under a different reference, a partial payment, a refund.\n\nWe have the base in place: one case per invoice and payment with its full trail, flags when something drifts, and rules tested on past data before they go live. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor NextPay, that could start with replaying last month's invoices against a three-day closing rule. From an export, no integration needed.\n\nWorth trying on invoices, or would returned payouts be the better place to start?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "body": "Hi Aldrich,\n\nFrom 31 December, the BIR requires large taxpayers and e-commerce sellers to report invoices within days. For NextPay's invoicing customers, \"paid but still open\" becomes a compliance question.\n\nMy guess is the hard cases are the payments: a QR Ph transfer under another reference, a partial payment, a refund.\n\nWe've built software that follows each invoice across systems and shows where it stopped and who owns it. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor NextPay, that could start with checking last month's invoices against a three-day rule.\n\nWorth trying on invoices, or are returned payouts a better place to start?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
-     "day": "D1-2",
+     "day": "D0-LI",
      "channel": "linkedin",
      "subject": "",
-     "body": "Aldrich, with the BIR e-invoicing deadline on 31 December, I emailed you an idea for NextPay's invoicing side. Would value your view."
+     "body": "Aldrich, from 31 December the BIR requires large taxpayers and e-commerce sellers to report invoices within days, so \"paid but still open\" becomes a compliance question for NextPay's customers. We've built software that follows each invoice across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data. Worth checking last month's invoices against a three-day rule, or are returned payouts a better place to start?\n\nIlia"
     },
     {
      "day": "D3",
      "channel": "email",
      "subject": "",
-     "body": "Hi Aldrich,\n\nAnother angle: returned payouts. The pattern I'd expect is a payout that shows as sent while the supplier says it never arrived, and someone on your team piecing the story together across InstaPay, PESONet and the receiving bank.\n\nThe same test works there: replay a month of returned payouts and see which rule would have caught them earlier.\n\nIs that a bigger pain for your customers than invoices?\n\nIlia"
+     "body": "Hi Aldrich,\n\nAnother angle: returned payouts. The pattern I'd expect is a payout that shows as sent while the supplier says it never arrived, and someone on your team piecing the story together across InstaPay, PESONet and the receiving bank.\n\nThe same check works there: take a month of returned payouts and see which rule would have caught them earlier.\n\nIs that a bigger pain for your customers than invoices?\n\nIlia"
     },
     {
-     "day": "D5",
+     "day": "D7",
+     "channel": "linkedin",
+     "subject": "",
+     "body": "Aldrich, one question on the BIR deadline. Do your invoicing customers expect NextPay to show which invoices are paid but not yet matched, or do they reconcile that themselves? It changes where the work lands in January. I sent you a short email on this.\n\nIlia"
+    },
+    {
+     "day": "D12",
      "channel": "email",
      "subject": "",
-     "body": "Aldrich, last one from me. If payout operations sit with someone else on the team, who would be best to ask? Happy to reach out directly.\n\nIlia"
+     "body": "Aldrich, closing the loop on my notes. If payout and invoicing operations sit with someone else on the team, who would be best to ask? Happy to reach out directly.\n\nIlia"
     }
    ]
   }
  ],
  "as_of": "2026-11-09",
- "approval": "Одобрено 9 Nov 2026"
+ "approval": "v3 одобрено Ильёй 9 Nov 2026 (120 слов, подводка, без бренда и выгрузки, график 0/+3/+7/+12, две концовки, без негатива). D0-LI — сжатие дня 0 для LinkedIn, на просмотр."
 }

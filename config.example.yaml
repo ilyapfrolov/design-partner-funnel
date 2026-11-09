@@ -60,7 +60,7 @@ notion:
       status_needs_enrichment: "Нужно обогатить"  # ОПЦИЮ СТАТУСА НУЖНО СОЗДАТЬ ВРУЧНУЮ (API не создаёт опции status)
       status_ready: "Готов"
       # Поля эксперимента на строках контактов. Создайте их в базе (select / url / number) и впишите названия:
-      offer_type: ""        # select: EMBED / BACKTEST / REPLAY
+      offer_type: ""        # select: PREBUILD / BACKTEST / REPLAY
       trigger_type: ""      # select: BUILDING / CHANGE / SCALE / MARKET
       cohort: ""            # select: company / market
       confidence: ""        # select: EVENT / INTERPRETATION

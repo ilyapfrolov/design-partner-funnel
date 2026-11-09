@@ -7,7 +7,7 @@ from datetime import date, datetime
 from .models import Contact, ContactPackage, Plan, Research, Trigger
 
 # §4 — повод → оффер
-OFFER_BY_TRIGGER = {"BUILDING": "EMBED", "CHANGE": "BACKTEST", "SCALE": "REPLAY", "MARKET": "BACKTEST"}
+OFFER_BY_TRIGGER = {"BUILDING": "PREBUILD", "CHANGE": "BACKTEST", "SCALE": "REPLAY", "MARKET": "BACKTEST"}
 TRIGGER_PRIORITY = {"BUILDING": 0, "CHANGE": 1, "SCALE": 2, "MARKET": 3}
 VERIFIED = {"verified", "verified_llm"}
 
@@ -17,19 +17,20 @@ STATE_DAYS = 270        # можно опираться как на текуще
 CONTEXT_DAYS = 365      # только фон в отчёте, в письмо не идёт
 MARKET_FUTURE_DAYS = 120  # рыночный дедлайн в будущем не дальше этого
 
-# §6 — лимиты
-D1_MAX_WORDS = 180
+# §6 — лимиты (Плейбук команды + решения Ильи 9 Nov 2026)
+D0_MAX_WORDS = 120        # первое письмо без подписи
+LI_MAX_WORDS = 80         # сообщение в LinkedIn (первое — D0-LI, или +7 после принятого запроса)
 D3_MAX_WORDS = 90
-D5_MAX_WORDS = 45
-LINKEDIN_MAX_CHARS = 200
+D12_MAX_WORDS = 45
 SUBJECT_WORDS = (1, 6)
+CADENCE = {"D0": 0, "D3": 3, "D7": 7, "D12": 12}   # дни от первого касания
 
-D1_REQUIRED = [
+D0_REQUIRED = [
     "my guess",
-    "we have the base in place",
+    "we've built software that",
     "the interesting part is what to build on top",
-    "from an export, no integration needed",
 ]
+LI0_REQUIRED = ["we've built software that"]
 
 # §5 — запрещено в теле (регистр не важен)
 FORBIDDEN = [
@@ -37,7 +38,7 @@ FORBIDDEN = [
     (r"help us (build|shape|create)", "просьба «помогите нам»"),
     (r"\b(book|schedule|jump on|hop on)\b.{0,20}\b(call|meeting|demo)\b", "просьба о созвоне"),
     (r"\b(quick|short) (call|chat)\b", "просьба о созвоне"),
-    (r"\b\d+\s*(-|–)?\s*min(ute)?s?\b", "просьба о созвоне на N минут"),
+    (r"\b\d+\s*(-|–)?\s*min(ute)?s?\b", "просьба о созвоне на N минут (только в концовке «20 минут»)"),
     (r"\b(our|existing) (customers|clients)\b", "утверждение о клиентах"),
     (r"\bcustomers like\b", "утверждение о клиентах"),
     (r"\bintegrat(es|ed) with\b", "утверждение об интеграциях"),
@@ -49,7 +50,12 @@ FORBIDDEN = [
     (r"\bautonomous(ly)?\b", "автономность — не заявляем"),
     (r"\b(you (don't|do not) have|lacks?|falls? short|struggl(e|es|ing) with)\b", "утверждение о слабости компании"),
     (r"\b(unlike|better than|outperforms?)\b", "сравнение с конкурентами"),
+    (r"\b(under your brand|white[- ]label|your own brand)\b", "встраивание под их брендом — продукт так не умеет (Продукт / MVP)"),
+    (r"\b(no integration|without integration|from an export)\b", "запуск из выгрузки без интеграции — ждёт подтверждения Тихона"),
+    (r"\b(goes|go|going|went) wrong\b|\brides on every\b|\bfall(s|ing)? behind\b|\bpain points?\b",
+     "негатив о компании: пишем, где копится ручная работа, а не где компания ошибается"),
 ]
+STATE_WORDS = re.compile(r"\b(saw|just|now|new|recently)\b", re.I)   # для «Состояния» в первом абзаце
 CONGRATS = re.compile(r"\bcongrat", re.I)
 
 
@@ -288,13 +294,24 @@ def _paragraphs(s: str) -> list[str]:
     return [p.strip() for p in re.split(r"\n\s*\n", s.strip()) if p.strip()]
 
 
+def _sig_ok(body: str, sig: list[str]) -> bool:
+    return [l.strip() for l in body.rstrip().splitlines()[-len(sig):]] == sig
+
+
+def with_ending(body: str, ending: str, sig: list[str]) -> str:
+    """Вариант «20 минут»: последний абзац дня 0 (перед подписью) заменяется концовкой."""
+    text = _strip_signature(body, sig)
+    paras = _paragraphs(text)
+    return "\n\n".join(paras[:-1] + [ending.strip()]) + "\n\n" + "\n".join(sig)
+
+
 def check_package(pkg: ContactPackage, contact: Contact, account_fact: str, research: Research,
                   plan: Plan, sender: dict) -> list[str]:
     P: list[str] = []
     full_sig = [sender["name"], sender["title"], sender["site"]]
     short_sig = [sender["short"]]
     by_day = {t.day: t for t in pkg.touches}
-    for need in ("D1", "D1-2", "D3", "D5"):
+    for need in ("D0", "D0-LI", "D3", "D7", "D12"):
         if need not in by_day:
             P.append(f"нет касания {need}")
     if P:
@@ -305,57 +322,79 @@ def check_package(pkg: ContactPackage, contact: Contact, account_fact: str, rese
     for t in usable_triggers(research):
         known |= numbers_in(t.quote) | numbers_in(t.summary)
     known |= numbers_in(account_fact)
-
     first = (contact.name.split() or [""])[0]
-    for day, t in by_day.items():
-        if t.channel == "email":
-            sig = full_sig if day == "D1" else short_sig
-            if [l.strip() for l in t.body.rstrip().splitlines()[-len(sig):]] != sig:
-                P.append(f"{day}: подпись должна быть «{' / '.join(sig)}»")
-            text = _strip_signature(t.body, sig)
-        else:
-            text = t.body.strip()
-        low = text.lower()
+    channel = {"D0": "email", "D0-LI": "linkedin", "D3": "email", "D7": "linkedin", "D12": "email"}
+
+    def text_checks(day: str, text: str, subject: str = "", allow_minutes: bool = False) -> None:
         for rx, why in FORBIDDEN:
+            if allow_minutes and "N минут" in why:
+                continue
             m = re.search(rx, text, re.I)
             if m:
                 P.append(f"{day}: {why} ({m.group(0)!r})")
-        extra = numbers_in(text + " " + t.subject) - known
+        extra = numbers_in(text + " " + subject) - known - ({"20"} if allow_minutes else set())
         if extra:
             P.append(f"{day}: числа без источника: {sorted(extra)}")
         if CONGRATS.search(text) and plan.hook_tier != "hook":
             P.append(f"{day}: поздравление допустимо только с событием моложе {HOOK_DAYS} дней")
 
-        if day == "D1":
-            if t.channel != "email":
-                P.append("D1 должен быть email")
+    for day, t in by_day.items():
+        if t.channel != channel[day]:
+            P.append(f"{day} должен быть {channel[day]}")
+        if day in ("D0", "D3", "D12"):
+            sig = full_sig if day == "D0" else short_sig
+            if not _sig_ok(t.body, sig):
+                P.append(f"{day}: подпись должна быть «{' / '.join(sig)}»")
+            text = _strip_signature(t.body, sig)
+        else:
+            if not _sig_ok(t.body, short_sig):
+                P.append(f"{day}: в конце должно быть «{sender['short']}»")
+            text = _strip_signature(t.body, short_sig)
+        low = text.lower()
+        text_checks(day, text, t.subject)
+
+        if day == "D0":
             if not text.startswith(f"Hi {first},"):
-                P.append(f"D1 должен начинаться с «Hi {first},»")
-            if words(text) > D1_MAX_WORDS:
-                P.append(f"D1: {words(text)} слов > {D1_MAX_WORDS}")
-            for need in D1_REQUIRED:
+                P.append(f"D0 должен начинаться с «Hi {first},»")
+            if words(text) > D0_MAX_WORDS:
+                P.append(f"D0: {words(text)} слов > {D0_MAX_WORDS}")
+            for need in D0_REQUIRED:
                 if need not in low:
-                    P.append(f"D1: нет обязательной фразы «{need}»")
+                    P.append(f"D0: нет обязательной фразы «{need}»")
             sw = len(t.subject.split())
             if not (SUBJECT_WORDS[0] <= sw <= SUBJECT_WORDS[1]):
-                P.append(f"D1: тема {sw} слов, нужно {SUBJECT_WORDS}")
-            last = _paragraphs(text)[-1]
+                P.append(f"D0: тема {sw} слов, нужно {SUBJECT_WORDS}")
+            paras = _paragraphs(text)
+            last = paras[-1]
             if not last.endswith("?") or " or " not in last.lower():
-                P.append("D1: финал должен быть вопросом «A или ваш вариант» (с «or», заканчивается «?»)")
-            if plan.d1_offer == "EMBED" and "under your brand" not in low:
-                P.append("D1: оффер EMBED должен содержать «under your brand»")
-        if day == "D1-2":
-            if t.channel != "linkedin":
-                P.append("D1-2 должен быть linkedin")
-            if len(text) > LINKEDIN_MAX_CHARS:
-                P.append(f"LinkedIn: {len(text)} знаков > {LINKEDIN_MAX_CHARS}")
-        if day in ("D3", "D5") and t.channel != "email":
-            P.append(f"{day} должен быть email")
+                P.append("D0: концовка «Мягкий» — вопрос с выбором (с «or», заканчивается «?»)")
+            opening = paras[1] if len(paras) > 1 else ""
+            if plan.hook_tier == "state" and STATE_WORDS.search(opening):
+                P.append(f"D0: повод — «Состояние», без saw / just / now / new в первом абзаце "
+                         f"({STATE_WORDS.search(opening).group(0)!r})")
+            if plan.d1_offer == "PREBUILD" and not re.search(r"before (you )?commit", low):
+                P.append("D0: оффер PREBUILD — «проверить до того, как вкладывать разработчиков» (before committing…)")
+            # вариант «20 минут»
+            end = pkg.ending_call.strip()
+            if not end:
+                P.append("нет концовки «20 минут» (ending_call)")
+            else:
+                alt = _strip_signature(with_ending(t.body, end, full_sig), full_sig)
+                if "20 minutes" not in end.lower() or not end.endswith("?"):
+                    P.append("концовка «20 минут»: вопрос о 20 минутах, заканчивается «?»")
+                if words(alt) > D0_MAX_WORDS:
+                    P.append(f"D0 с концовкой «20 минут»: {words(alt)} слов > {D0_MAX_WORDS}")
+                text_checks("D0 «20 минут»", end, allow_minutes=True)
+        if day == "D0-LI":
+            if not text.startswith(f"{first},"):
+                P.append(f"D0-LI должен начинаться с «{first},»")
+            for need in LI0_REQUIRED:
+                if need not in low:
+                    P.append(f"D0-LI: нет обязательной фразы «{need}»")
+        if day in ("D0-LI", "D7") and words(text) > LI_MAX_WORDS:
+            P.append(f"{day}: {words(text)} слов > {LI_MAX_WORDS}")
         if day == "D3" and words(text) > D3_MAX_WORDS:
             P.append(f"D3: {words(text)} слов > {D3_MAX_WORDS}")
-        if day == "D5" and words(text) > D5_MAX_WORDS:
-            P.append(f"D5: {words(text)} слов > {D5_MAX_WORDS}")
-        offer_here = plan.d1_offer if day in ("D1", "D1-2") else d3_offer(plan, pkg.d3_basis) if day == "D3" else None
-        if offer_here and offer_here != "EMBED" and "under your brand" in low:
-            P.append(f"{day}: «under your brand» допустимо только для EMBED")
+        if day == "D12" and words(text) > D12_MAX_WORDS:
+            P.append(f"D12: {words(text)} слов > {D12_MAX_WORDS}")
     return P

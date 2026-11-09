@@ -56,34 +56,41 @@
     "t1"
    ],
    "d3_basis": "B",
+   "ending_call": "Would 20 minutes be worth it to compare how your team tracks payout timing today?",
    "touches": [
     {
-     "day": "D1",
+     "day": "D0",
      "channel": "email",
      "subject": "next day, two days, five days",
-     "body": "Hi Wendy,\n\nI saw Nomod's new payout plans: Next Day, Two Days and Five Days, now with Saturday payouts. Getting paid faster is a strong reason for a merchant to stay.\n\nMy guess is every promise like that also needs watching: three schedules, UAE holidays, minimum payouts and card types each create their own late or held payouts, and each one lands on your team.\n\nWe have the base in place: one case per payout with its full trail, and rules tested on past data before they go live. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor Nomod, that could start with replaying last month's payouts against each plan's promise. From an export, no integration needed.\n\nWorth trying on last month's payouts, or is there a change you're planning that we should test instead?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "body": "Hi Wendy,\n\nSince July, Nomod has offered Next Day, Two Days and Five Days payouts. Faster money is a strong reason for a merchant to stay.\n\nMy guess is each promise needs watching: three schedules, UAE holidays and minimums each add payouts your team has to keep track of.\n\nWe've built software that follows each payout across systems and shows where it stopped and who owns it. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor Nomod, that could start with checking last month's payouts against each plan's promise.\n\nWorth trying on last month's payouts, or should we test a planned change instead?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
-     "day": "D1-2",
+     "day": "D0-LI",
      "channel": "linkedin",
      "subject": "",
-     "body": "Wendy, I emailed you an idea after Nomod's new Next Day / Two Days / Five Days plans: replaying last month's payouts against each plan's promise. Would value your view."
+     "body": "Wendy, since July Nomod has offered Next Day, Two Days and Five Days payouts. My guess is each promise adds payouts your team has to keep track of. We've built software that follows each payout across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data. Worth checking last month's payouts against each plan's promise, or should we test a planned change instead?\n\nIlia"
     },
     {
      "day": "D3",
      "channel": "email",
      "subject": "",
-     "body": "Hi Wendy,\n\nAnother angle: disputes. Nomod runs its own dispute process with fees, and each chargeback is a small case of its own: evidence, deadlines, the merchant's balance and the final outcome.\n\nThe same test works there: apply a different handling rule to last quarter's disputes and see which would have closed sooner, before changing anything live.\n\nAre disputes a bigger time sink than payouts for your team?\n\nIlia"
+     "body": "Hi Wendy,\n\nAnother angle: disputes. Nomod runs its own dispute process with fees, and each chargeback is a small case of its own: evidence, deadlines, the merchant's balance and the final outcome.\n\nThe same check works there: apply a different handling rule to last quarter's disputes and see which would have closed sooner, before changing anything live.\n\nAre disputes a bigger time sink than payouts for your team?\n\nIlia"
     },
     {
-     "day": "D5",
+     "day": "D7",
+     "channel": "linkedin",
+     "subject": "",
+     "body": "Wendy, a question rather than a pitch. How does your team keep track of which payouts are on time across the three plans? That is what I keep coming back to with tiered payout plans. I emailed you a short idea on it.\n\nIlia"
+    },
+    {
+     "day": "D12",
      "channel": "email",
      "subject": "",
-     "body": "Wendy, last note from me. If this sits with someone else on the team, who would be best to talk to? Happy to take it from there.\n\nIlia"
+     "body": "Wendy, closing the loop on my notes. If payouts sit with someone else on the team, who would be best to talk to? Happy to take it from there.\n\nIlia"
     }
    ]
   }
  ],
  "as_of": "2026-11-09",
- "approval": "Одобрено 9 Nov 2026"
+ "approval": "v3 одобрено Ильёй 9 Nov 2026 (120 слов, подводка, без бренда и выгрузки, график 0/+3/+7/+12, две концовки, без негатива). D0-LI — сжатие дня 0 для LinkedIn, на просмотр."
 }

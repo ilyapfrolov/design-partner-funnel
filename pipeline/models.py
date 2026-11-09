@@ -6,7 +6,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 TriggerType = Literal["BUILDING", "CHANGE", "SCALE", "MARKET"]
-OfferType = Literal["EMBED", "BACKTEST", "REPLAY"]
+OfferType = Literal["PREBUILD", "BACKTEST", "REPLAY"]
 Tier = Literal["hook", "state", "context", "stale", "invalid"]
 
 
@@ -45,6 +45,9 @@ class Contact(BaseModel):
     found_by: str = ""            # base / web / provider
     level: Literal["leader", "head", "executor"] = "leader"
     tier: Literal["executor", "owner", "nearest", ""] = ""   # ступень лестницы ролей (roles.yaml)
+    touches_done: int = 0         # «Касаний» в «Диалогах»: >0 — переписка начата, страницу не трогаем
+    dialog_status: str = ""       # «Статус» в «Диалогах»
+    variant: str = ""             # «Вариант вопроса»: Мягкий / 20 минут
     start_day: int = 1            # 3 — руководитель крупного аккаунта (снизу вверх)
 
 
@@ -100,8 +103,13 @@ class PeopleResult(BaseModel):
     note: str = ""
 
 
+# График касаний (Плейбук): день 0, +3, +7, +12. D0-LI — первое сообщение в LinkedIn,
+# если основной канал LinkedIn (нет email). D7 — LinkedIn после принятого запроса на контакт.
+DAYS = ("D0", "D0-LI", "D3", "D7", "D12")
+
+
 class Touch(BaseModel):
-    day: Literal["D1", "D1-2", "D3", "D5"]
+    day: Literal["D0", "D0-LI", "D3", "D7", "D12"]
     channel: Literal["email", "linkedin"]
     subject: str = ""
     body: str
@@ -109,8 +117,9 @@ class Touch(BaseModel):
 
 class ContactPackage(BaseModel):
     contact_key: str
-    d1_trigger_ids: list[str]
-    d3_basis: str                 # id повода или "B"
+    d1_trigger_ids: list[str]     # поводы первого сообщения (день 0)
+    d3_basis: str                 # основание касания +3: id повода или "B"
+    ending_call: str = ""         # концовка «20 минут» — заменяет последний абзац дня 0 (вариант вопроса)
     touches: list[Touch]
 
 
@@ -131,9 +140,9 @@ class ReviewResult(BaseModel):
 
 class Plan(BaseModel):
     cohort: Literal["company", "market"] = "company"
-    primary_trigger_id: str       # повод, определяющий оффер
-    hook_trigger_id: str          # повод, с которого открывается письмо
-    hook_tier: Literal["hook", "state"]
+    primary_trigger_id: str = ""  # повод, определяющий оффер
+    hook_trigger_id: str = ""     # повод, с которого открывается письмо
+    hook_tier: Literal["hook", "state"] = "state"
     d1_offer: OfferType
     d3_options: dict[str, OfferType] = Field(default_factory=dict)
     d3_fallback_offer: OfferType = "REPLAY"

@@ -15,7 +15,7 @@ Honest reason we write: the base is built; we are looking for what to build on t
 NEVER: the name HAIA in the body (signature only) · customers, pilots, integrations, results numbers · pricing, terms, free, discount, limited spots, licences · "help us build" · asking for a call or meeting or N minutes · saying the company lacks something or struggles · comparing with competitors · internal words (value proposition, OEM, WTP, Job, control plane, AI-native, autonomous) · numbers that are not in `verified_triggers` or `account.fact`.
 
 ## Offers
-- `EMBED` — a layer inside their product, under their brand, tested first on a month of their data.
+- `PREBUILD` — a layer inside their product, under their brand, tested first on a month of their data.
 - `BACKTEST` — replay past data against a change they made or plan, to see what it would have caught.
 - `REPLAY` — shadow replay of a month of one of their processes: which cases stalled, why, what would have closed them sooner.
 
@@ -26,7 +26,7 @@ NEVER: the name HAIA in the body (signature only) · customers, pilots, integrat
    - If `plan.cohort` is `market`, the opener is the market event and how it lands on this company; never pretend it is news about the company.
 2. The assumption, explicitly marked as a guess: starts with "My guess" — about `process_a`.
 3. Exactly this shape: "We have the base in place: <2–3 capabilities from the list, phrased for their process>. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess."
-4. The offer in 1–2 sentences: "For <Company>, that could <offer applied to their process> ..." For EMBED include "under your brand". End the paragraph with: "From an export, no integration needed."
+4. The offer in 1–2 sentences: "For <Company>, that could <offer applied to their process> ..." For PREBUILD include "under your brand". End the paragraph with: "From an export, no integration needed."
 5. One question, A or their own option, ending with "?": "Worth trying on <X>, or <their alternative>?"
 Start with "Hi <first name>,". Subject: 2–5 words, looks internal, tied to the trigger. Signature, each on its own line: sender.name / sender.title / sender.site.
 

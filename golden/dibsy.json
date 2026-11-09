@@ -55,9 +55,9 @@
   "notes": "They build similar merchant-facing tooling; angle is building on top instead of from scratch."
  },
  "expected": {
-  "d1_offer": "EMBED",
+  "d1_offer": "PREBUILD",
   "d3_basis": "B",
-  "d3_offer": "EMBED",
+  "d3_offer": "PREBUILD",
   "cohort": "company"
  },
  "packages": [
@@ -68,34 +68,41 @@
     "t2"
    ],
    "d3_basis": "B",
+   "ending_call": "Would 20 minutes be worth it to compare notes on how you'll build it?",
    "touches": [
     {
-     "day": "D1",
+     "day": "D0",
      "channel": "email",
      "subject": "+112% volume",
-     "body": "Hi Dinesh,\n\nCongrats on the Forbes Fintech 50, and on Q1: 49% more transactions but 112% more volume. That's more money riding on every case that goes wrong.\n\nI also saw AI Insights and the roadmap toward settlement visibility and reconciliation. My guess is that's a lot to build in-house while volume doubles.\n\nWe have the base in place: one case per payment with its full trail, flags when something drifts, and rules tested on past data before anything, including an AI, acts on them. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor Dibsy, that could be the settlement and reconciliation layer behind your roadmap, under your brand, tested first on a month of refunds and settlements. From an export, no integration needed.\n\nWorth testing on refunds and settlements, or is another part of the roadmap a better fit?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "body": "Hi Dinesh,\n\nCongrats on the Forbes Fintech 50 and on Q1 volume up 112%.\n\nAI Insights has been live since April, and reconciliation is next. My guess is building that in-house while volume doubles is a big project.\n\nWe've built software that follows each payment across systems and shows where it stopped and who owns it. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor Dibsy, that could mean running a month of settlements through it before committing engineers to that layer.\n\nWorth testing on settlements, or is another part of the roadmap a better fit?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
-     "day": "D1-2",
+     "day": "D0-LI",
      "channel": "linkedin",
      "subject": "",
-     "body": "Dinesh, congrats on the Forbes Fintech 50. I emailed you an idea for the settlement and reconciliation part of your roadmap. Would value your view."
+     "body": "Dinesh, congrats on the Forbes Fintech 50 and on Q1 volume up 112%. AI Insights has been live since April, and reconciliation is next. We've built software that follows each payment across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data. Worth running a month of settlements through it before committing engineers, or is another part of the roadmap a better fit?\n\nIlia"
     },
     {
      "day": "D3",
      "channel": "email",
      "subject": "",
-     "body": "Hi Dinesh,\n\nAnother angle: failed payments. Your guide to Qatar decline codes shows how much context a merchant needs to recover a payment.\n\nRecovery is on your roadmap too. The same layer could test a retry or recovery rule on a month of declines and show which payments it would have saved, before it goes live.\n\nIs recovery a bigger lever than settlements for you right now?\n\nIlia"
+     "body": "Hi Dinesh,\n\nAnother angle: failed payments. Your guide to Qatar decline codes shows how much context a merchant needs to recover a payment.\n\nRecovery is on your roadmap too. The same software could test a retry or recovery rule on a month of declines and show which payments it would have saved, before it goes live.\n\nIs recovery a bigger lever than settlements for you right now?\n\nIlia"
     },
     {
-     "day": "D5",
+     "day": "D7",
+     "channel": "linkedin",
+     "subject": "",
+     "body": "Dinesh, one question. With AI Insights already in merchants' hands, do you plan for the AI to act on settlement issues itself, or only flag them to a person? I'd value your view on where that line should sit. I emailed you a short note.\n\nIlia"
+    },
+    {
+     "day": "D12",
      "channel": "email",
      "subject": "",
-     "body": "Dinesh, last note from me. If this sits with someone else at Dibsy, who would be best to talk to? Happy to take it from there.\n\nIlia"
+     "body": "Dinesh, closing the loop on my notes. If this sits with someone else at Dibsy, who would be best to talk to? Happy to take it from there.\n\nIlia"
     }
    ]
   }
  ],
  "as_of": "2026-11-09",
- "approval": "Одобрено 9 Nov 2026"
+ "approval": "v3 одобрено Ильёй 9 Nov 2026 (120 слов, подводка, без бренда и выгрузки, график 0/+3/+7/+12, две концовки, без негатива). D0-LI — сжатие дня 0 для LinkedIn, на просмотр."
 }

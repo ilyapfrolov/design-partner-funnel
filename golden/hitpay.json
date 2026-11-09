@@ -66,7 +66,7 @@
   "notes": ""
  },
  "expected": {
-  "d1_offer": "EMBED",
+  "d1_offer": "PREBUILD",
   "d3_basis": "t3",
   "d3_offer": "REPLAY",
   "cohort": "company"
@@ -78,34 +78,41 @@
     "t1"
    ],
    "d3_basis": "t3",
+   "ending_call": "Would 20 minutes be worth it to compare how your team handles these today?",
    "touches": [
     {
-     "day": "D1",
+     "day": "D0",
      "channel": "email",
      "subject": "CFO Stack",
-     "body": "Hi Aditya,\n\nSaw the CFO Stack launch. Virtual Accounts that confirm corporate transfers in real time, right next to card and PayNow payments, is a smart way to take manual matching off SME finance teams, and supplier payments and payroll will widen that surface a lot.\n\nMy guess is the hard part isn't the happy path but the leftovers: the transfer that doesn't match an invoice, the partial payment, the payout that bounces, each needing someone to own it.\n\nWe have the base in place: one case per transaction with its full trail, flags when something drifts, and a suggested next step. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor HitPay, that could mean an exceptions layer inside CFO Stack, under your brand, tested first on a month of your Virtual Account transfers. From an export, no integration needed.\n\nWorth testing on unmatched transfers, or is another part of the CFO Stack roadmap a better fit?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "body": "Hi Aditya,\n\nSaw the CFO Stack launch: Virtual Accounts that confirm corporate transfers in real time take manual matching off SME finance teams.\n\nMy guess is the hard part is the leftovers: unmatched transfers, partial payments, bounced payouts, each needing an owner.\n\nWe've built software that follows each transaction across systems and shows where it stopped and who owns it. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor HitPay, that could mean running the first month of Virtual Account transfers through it before committing engineers to that layer.\n\nWorth trying on unmatched transfers, or is another part of CFO Stack a better fit?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
-     "day": "D1-2",
+     "day": "D0-LI",
      "channel": "linkedin",
      "subject": "",
-     "body": "Aditya, saw the CFO Stack launch. I emailed you an idea for the unmatched-transfer side of Virtual Accounts. Would value your view."
+     "body": "Aditya, saw the CFO Stack launch. My guess is the hard part is the leftovers in Virtual Accounts: unmatched transfers, partial payments, bounced payouts, each needing an owner. We've built software that follows each transaction across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data. Worth trying on a month of your transfers, or is another part of CFO Stack a better fit?\n\nIlia"
     },
     {
      "day": "D3",
      "channel": "email",
      "subject": "",
-     "body": "Hi Aditya,\n\nAnother angle: UPI (INR), launched on 30 October for merchants outside India. T+5 settlement into the merchant's home currency is exactly where \"where is my money\" questions start on a new rail.\n\nThe same base works there as a shadow replay: once a few weeks of UPI settlements are in, we replay them from an export and show which ran late and why.\n\nIs UPI a better place to start than unmatched transfers?\n\nIlia"
+     "body": "Hi Aditya,\n\nAnother angle: UPI (INR), launched on 30 October for merchants outside India. T+5 settlement into the merchant's home currency is where \"where is my money\" questions start on a new rail.\n\nOnce a few weeks of UPI settlements are in, we could run them through the same software and show which ran late and why.\n\nIs UPI a better place to start than unmatched transfers?\n\nIlia"
     },
     {
-     "day": "D5",
+     "day": "D7",
+     "channel": "linkedin",
+     "subject": "",
+     "body": "Aditya, a question rather than a pitch. With supplier payments and payroll next on the CFO Stack roadmap, money starts leaving through Virtual Accounts, not just arriving. Outgoing flows bring their own exceptions: a payout the bank returns needs an owner as much as an unmatched transfer does. Are you designing for that now, or later? I emailed you a short note on it.\n\nIlia"
+    },
+    {
+     "day": "D12",
      "channel": "email",
      "subject": "",
-     "body": "Aditya, last note from me. If payment operations sit with someone else day to day, who would be best to ask? Happy to take it from there.\n\nIlia"
+     "body": "Aditya, closing the loop on my notes. If payment operations sit with someone else day to day, who would be best to ask? Happy to take it from there.\n\nIlia"
     }
    ]
   }
  ],
  "as_of": "2026-11-09",
- "approval": "Одобрено 9 Nov 2026"
+ "approval": "v3 одобрено Ильёй 9 Nov 2026 (120 слов, подводка, без бренда и выгрузки, график 0/+3/+7/+12, две концовки, без негатива). D0-LI — сжатие дня 0 для LinkedIn, на просмотр."
 }
