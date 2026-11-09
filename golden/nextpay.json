@@ -1,0 +1,86 @@
+{
+ "use_as_prompt_example": false,
+ "account": {
+  "company": "NextPay",
+  "segment": "ICP-1 PSP / acquiring",
+  "size": "11–50 (NextPay PH LinkedIn, not UK homonym)",
+  "fact": "Documented / source-reported product scope: NextAPI offers QR Ph/Instapay/PESONet payouts, signed webhooks and reconciliation."
+ },
+ "contacts": [
+  {
+   "key": "c1",
+   "name": "Aldrich Tan",
+   "title": "CXO, Co-founder",
+   "function": "CEO или основатель",
+   "email": "aldrich@nextfinancial.io",
+   "linkedin": "http://www.linkedin.com/in/aldricht",
+   "level": "leader",
+   "start_day": 1
+  }
+ ],
+ "research": {
+  "triggers": [
+   {
+    "id": "t1",
+    "type": "BUILDING",
+    "event_date": "2025-12-17",
+    "url": "https://nextpay.world/blog/the-2025-nextpay-product-showcase",
+    "quote": "NextPay was awarded the Silver Award for Customer Experience Excellence at the KMC Startup Awards",
+    "summary": "NextPay made payment visibility a product priority: Track My Funds, a public status page, batches up to a thousand recipients; it won a KMC customer experience award.",
+    "ops_implication": "Visibility shows a payout went wrong; resolving stuck or returned payouts still needs the team.",
+    "confidence": "EVENT",
+    "verification": "verified"
+   }
+  ],
+  "coverage": {
+   "news": "YesPress profile July 2026",
+   "company_site": "2025 product showcase",
+   "jobs": "none relevant",
+   "people": "Aldrich: service designer, UXPH",
+   "base": "invoice closing hypothesis"
+  },
+  "process_a": "stuck or returned payouts after Track My Funds shows a problem",
+  "process_b": "closing an invoice after a QR Ph or bank transfer payment",
+  "notes": "CEO is Artie Lopez, CTO Don Pansacola; do not name them."
+ },
+ "expected": {
+  "d1_offer": "EMBED",
+  "d3_basis": "B",
+  "d3_offer": "EMBED"
+ },
+ "packages": [
+  {
+   "contact_key": "c1",
+   "d1_trigger_ids": [
+    "t1"
+   ],
+   "d3_basis": "B",
+   "touches": [
+    {
+     "day": "D1",
+     "channel": "email",
+     "subject": "after Track My Funds",
+     "body": "Hi Aldrich,\n\nCongrats on the KMC customer experience award, and on Track My Funds. Making payment visibility a product priority is the right instinct when a business can pay a whole payroll in one batch.\n\nMy guess is the hard part comes after visibility: a payout that's stuck or returned, where the business owner can see the problem but still needs someone on your team to explain and fix it.\n\nWe have the base in place: one case per payout with its full trail, flags when something drifts, and a suggested next step. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor NextPay, that could be the part that takes over when Track My Funds shows something wrong, inside your product and under your brand, tested first on a month of returned payouts. From an export, no integration needed.\n\nWorth testing on returned payouts, or is there another part of the product where this would matter more?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+    },
+    {
+     "day": "D1-2",
+     "channel": "linkedin",
+     "subject": "",
+     "body": "Aldrich, congrats on the KMC CX award. I emailed you an idea about what happens after Track My Funds shows a payout went wrong. Would value your view."
+    },
+    {
+     "day": "D3",
+     "channel": "email",
+     "subject": "",
+     "body": "Hi Aldrich,\n\nAnother angle: closing an invoice with confidence. The pattern I'd expect is a customer who says they paid, a QR Ph or bank transfer that arrives later or under a different reference, and a business owner who can't tell whether the invoice is done.\n\nThe same layer could sit inside NextPay invoicing. We'd test it on a month of invoices: which ones stayed open after payment, and why.\n\nIs that a bigger pain for your customers than returned payouts?\n\nIlia"
+    },
+    {
+     "day": "D5",
+     "channel": "email",
+     "subject": "",
+     "body": "Aldrich, last one from me. If payout operations sit with someone else on the team, who would be best to ask? Happy to reach out directly.\n\nIlia"
+    }
+   ]
+  }
+ ]
+}

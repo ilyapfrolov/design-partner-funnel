@@ -1,0 +1,78 @@
+# Скопируйте в config.yaml (он в .gitignore) и заполните.
+# Доступы здесь НЕ хранятся: токен Notion берётся из переменной окружения NOTION_TOKEN.
+# Токен выдаёт администратор корпоративного Notion (внутренняя интеграция с доступом
+# к базе аккаунтов, базе контактов и странице для карточек).
+
+notion:
+  api_version: "2025-09-03"
+  # ID data source (не database). См. README → «Как найти ID».
+  accounts_data_source_id: "REPLACE_ME"
+  contacts_data_source_id: "REPLACE_ME"
+  # Страница, внутри которой пайплайн создаёт карточки аккаунтов.
+  output_parent_page_id: "REPLACE_ME"
+
+  # Названия полей базы аккаунтов (как в базе «HAIA — Buyer Discovery Accounts»).
+  accounts:
+    company: "Компания"
+    account_id: "Account ID"
+    segment: "Сегмент"
+    priority: "Приоритет"
+    status: "Статус"
+    size: "Размер"
+    domain: "Домен"
+    role: "Роль"
+    fact: "X — факт"
+    hypothesis: "Y — гипотеза"
+    value: "N — Ценность HAIA (Value Proposition)"
+    question: "Вопрос для квалификации"
+    fallback: "Если гипотеза неинтересна"
+    source: "Источник"
+    # Необязательные поля для записи результата. Если их нет в базе — оставьте пустыми.
+    funnel_status: ""      # select или text, например «Воронка — статус»
+    funnel_page: ""        # url, например «Воронка — карточка»
+
+  # Названия полей базы контактов. Проверьте по реальной базе.
+  contacts:
+    company: "Компания"    # поле, по которому контакт связан с аккаунтом
+    company_match: "name"  # name — по названию компании; relation — если поле company это relation на базу аккаунтов
+    name: "Имя"
+    title: "Должность"
+    function: "Функция"    # select: Operations / CEO или основатель / Product / Risk / Payments ...
+    email: "Email"
+    linkedin: "LinkedIn"
+
+selection:
+  priorities: ["P1", "P2"]
+  exclude_statuses: ["Research hold"]
+  exclude_segments: ["ICP-8 P2P / crowdfunding — control"]
+  # Контакты каких функций берём. Остальные пропускаются и попадают в отчёт (SPEC.md §2).
+  allowed_functions: ["Operations", "CEO или основатель", "Payments", "Finance"]
+  require_contact: true
+  batch_size: 20
+  parallel: 3
+
+# Алиасы моделей Claude Code. Работает на подписке аккаунта, где выполнен `claude login`.
+models:
+  research: "sonnet"
+  write: "sonnet"
+  review: "sonnet"
+  verify_fallback: "haiku"
+
+research:
+  freshness_days: 365
+  max_quote_words: 25
+  min_verified_triggers: 1
+  # Если сайт не отдаёт страницу коду (403, JS), разрешить проверку цитаты через WebFetch в Claude.
+  # Такие поводы помечаются verified_llm и видны в отчёте.
+  llm_verify_fallback: true
+
+sender:
+  name: "Ilia Frolov"
+  title: "CRO & Product Architect, HAIA"
+  site: "haia.finance"
+  short: "Ilia"
+
+timeouts:
+  research_sec: 900
+  write_sec: 300
+  review_sec: 300

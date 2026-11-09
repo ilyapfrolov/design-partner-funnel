@@ -1,0 +1,86 @@
+{
+ "use_as_prompt_example": true,
+ "account": {
+  "company": "Nomod",
+  "segment": "ICP-1 PSP / acquiring",
+  "size": "11–50 (LinkedIn)",
+  "fact": "Documented / source-reported product scope: supports invoice/payment status, payout schedules and managed dispute process including fees."
+ },
+ "contacts": [
+  {
+   "key": "c1",
+   "name": "Wendy Mendoza",
+   "title": "Business Operations Director",
+   "function": "Operations",
+   "email": "wendy.mendoza@nomod.com",
+   "linkedin": "http://www.linkedin.com/in/wendy-mendoza-12310232",
+   "level": "head",
+   "start_day": 1
+  }
+ ],
+ "research": {
+  "triggers": [
+   {
+    "id": "t1",
+    "type": "CHANGE",
+    "event_date": "2026-07-17",
+    "url": "https://play.google.com/store/apps/details?id=com.nomod.next&hl=en_US",
+    "quote": "Meet Next Day, our new price plan: sell on Monday, get paid on Tuesday.",
+    "summary": "Nomod launched Next Day, Two Days and Five Days payout plans with payouts Monday to Saturday except UAE public holidays.",
+    "ops_implication": "Three schedules plus holidays, minimums and card types multiply late or held payouts the team must explain.",
+    "confidence": "EVENT",
+    "verification": "verified"
+   }
+  ],
+  "coverage": {
+   "news": "seed round (old)",
+   "company_site": "pricing page, disputes docs",
+   "jobs": "none",
+   "people": "none",
+   "base": "disputes / chargebacks"
+  },
+  "process_a": "payouts against each plan's promised timing",
+  "process_b": "disputes and chargebacks under Nomod's own process with fees",
+  "notes": "Do not mention reviews about slow payouts."
+ },
+ "expected": {
+  "d1_offer": "BACKTEST",
+  "d3_basis": "B",
+  "d3_offer": "BACKTEST"
+ },
+ "packages": [
+  {
+   "contact_key": "c1",
+   "d1_trigger_ids": [
+    "t1"
+   ],
+   "d3_basis": "B",
+   "touches": [
+    {
+     "day": "D1",
+     "channel": "email",
+     "subject": "next day, two days, five days",
+     "body": "Hi Wendy,\n\nI saw Nomod's new payout plans: Next Day, Two Days and Five Days, now with Saturday payouts. Getting paid faster is a strong reason for a merchant to stay.\n\nMy guess is every promise like that also needs watching: three schedules, UAE holidays, minimum payouts and card types each create their own late or held payouts, and each one lands on your team.\n\nWe have the base in place: one case per payout with its full trail, and rules tested on past data before they go live. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor Nomod, that could start with replaying last month's payouts against each plan's promise. From an export, no integration needed.\n\nWorth trying on last month's payouts, or is there a change you're planning that we should test instead?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+    },
+    {
+     "day": "D1-2",
+     "channel": "linkedin",
+     "subject": "",
+     "body": "Wendy, I emailed you an idea after Nomod's new Next Day / Two Days / Five Days plans: replaying last month's payouts against each plan's promise. Would value your view."
+    },
+    {
+     "day": "D3",
+     "channel": "email",
+     "subject": "",
+     "body": "Hi Wendy,\n\nAnother angle: disputes. Nomod runs its own dispute process with fees, and each chargeback is a small case of its own: evidence, deadlines, the merchant's balance and the final outcome.\n\nThe same test works there: apply a different handling rule to last quarter's disputes and see which would have closed sooner, before changing anything live.\n\nAre disputes a bigger time sink than payouts for your team?\n\nIlia"
+    },
+    {
+     "day": "D5",
+     "channel": "email",
+     "subject": "",
+     "body": "Wendy, last note from me. If this sits with someone else on the team, who would be best to talk to? Happy to take it from there.\n\nIlia"
+    }
+   ]
+  }
+ ]
+}

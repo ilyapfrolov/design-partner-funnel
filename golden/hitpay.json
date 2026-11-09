@@ -1,0 +1,97 @@
+{
+ "use_as_prompt_example": true,
+ "account": {
+  "company": "HitPay",
+  "segment": "ICP-1 PSP / acquiring",
+  "size": "11–50 (LinkedIn)",
+  "fact": "Documented / source-reported product scope: advertises multiple payment methods, invoices, recurring, pricing; Stripe case confirms purchased processor."
+ },
+ "contacts": [
+  {
+   "key": "c1",
+   "name": "Aditya Haripurkar",
+   "title": "Co-Founder and CEO",
+   "function": "CEO или основатель",
+   "email": "aditya@hit-pay.com",
+   "linkedin": "https://www.linkedin.com/in/adityaharipurkar/",
+   "level": "leader",
+   "start_day": 1
+  }
+ ],
+ "research": {
+  "triggers": [
+   {
+    "id": "t1",
+    "type": "BUILDING",
+    "event_date": "2026-09-18",
+    "url": "https://technode.global/2026/09/18/hitpay-cfo-stack-b2b-virtual-accounts-singapore-philippines/",
+    "quote": "Transfers are confirmed in real time in the HitPay dashboard and recorded alongside card, PayNow or QR, and payment-link transactions for reconciliation.",
+    "summary": "HitPay launched CFO Stack with Virtual Accounts for B2B collections; supplier payments, payroll and spend tools are on the roadmap.",
+    "ops_implication": "Unmatched or partial corporate transfers become a new class of exceptions for SME finance teams.",
+    "confidence": "EVENT",
+    "verification": "verified"
+   },
+   {
+    "id": "t2",
+    "type": "SCALE",
+    "event_date": "2026-01-19",
+    "url": "https://beta.hirebase.org/company/hitpay/jobs/payment-operations-associate-adf485e0",
+    "quote": "ensuring smooth operations across payment method onboarding, reconciliation, and issue resolution",
+    "summary": "HitPay has been hiring for payment operations and finance roles with reconciliation in scope.",
+    "ops_implication": "Internal reconciliation load is growing with payment methods and entities.",
+    "confidence": "EVENT",
+    "verification": "verified"
+   }
+  ],
+  "coverage": {
+   "news": "CFO Stack, Remittance API, Tap to Pay",
+   "company_site": "changelog: Checkout V2",
+   "jobs": "Payment Operations Associate, Finance Team Lead",
+   "people": "CNBC quote by CEO",
+   "base": "merchant activation hypothesis"
+  },
+  "process_a": "unmatched and partial incoming corporate transfers in Virtual Accounts",
+  "process_b": "internal settlement reconciliation across entities and payment flows",
+  "notes": ""
+ },
+ "expected": {
+  "d1_offer": "EMBED",
+  "d3_basis": "t2",
+  "d3_offer": "REPLAY"
+ },
+ "packages": [
+  {
+   "contact_key": "c1",
+   "d1_trigger_ids": [
+    "t1"
+   ],
+   "d3_basis": "t2",
+   "touches": [
+    {
+     "day": "D1",
+     "channel": "email",
+     "subject": "CFO Stack",
+     "body": "Hi Aditya,\n\nSaw the CFO Stack launch. Virtual Accounts that confirm corporate transfers in real time, right next to card and PayNow payments, is a smart way to take manual matching off SME finance teams, and supplier payments and payroll will widen that surface a lot.\n\nMy guess is the hard part isn't the happy path but the leftovers: the transfer that doesn't match an invoice, the partial payment, the payout that bounces, each needing someone to own it.\n\nWe have the base in place: one case per transaction with its full trail, flags when something drifts, and a suggested next step. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor HitPay, that could mean an exceptions layer inside CFO Stack, under your brand, tested first on a month of your Virtual Account transfers. From an export, no integration needed.\n\nWorth testing on unmatched transfers, or is another part of the CFO Stack roadmap a better fit?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+    },
+    {
+     "day": "D1-2",
+     "channel": "linkedin",
+     "subject": "",
+     "body": "Aditya, saw the CFO Stack launch. I emailed you an idea for the unmatched-transfer side of Virtual Accounts. Would value your view."
+    },
+    {
+     "day": "D3",
+     "channel": "email",
+     "subject": "",
+     "body": "Hi Aditya,\n\nAnother angle, on your side rather than your merchants': you've been hiring for payment operations and finance roles this year, with reconciliation across entities and payment flows in the scope.\n\nThe same approach works there as a shadow replay: last month's settlements from an export, which cases stalled, why, and what would have closed them sooner.\n\nIs internal reconciliation a bigger drag than the merchant side right now?\n\nIlia"
+    },
+    {
+     "day": "D5",
+     "channel": "email",
+     "subject": "",
+     "body": "Aditya, last note from me. If payment operations sit with someone else day to day, who would be best to ask? Happy to take it from there.\n\nIlia"
+    }
+   ]
+  }
+ ]
+}

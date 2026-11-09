@@ -1,0 +1,98 @@
+{
+ "use_as_prompt_example": false,
+ "account": {
+  "company": "Dibsy",
+  "segment": "ICP-1 PSP / acquiring",
+  "size": "11–50 (LinkedIn)",
+  "fact": "Dibsy: Dibsy supports hosted/API payments, merchant dashboard with refunds, team roles and settlement twice weekly; native merchant tools strong"
+ },
+ "contacts": [
+  {
+   "key": "c1",
+   "name": "Dinesh Sanjeewa",
+   "title": "Head of Merchant Operations & Payments",
+   "function": "Operations",
+   "email": "dinesh.s@dibsy.one",
+   "linkedin": "http://www.linkedin.com/in/dinesh-sanjeewa-160990123",
+   "level": "head",
+   "start_day": 1
+  }
+ ],
+ "research": {
+  "triggers": [
+   {
+    "id": "t1",
+    "type": "BUILDING",
+    "event_date": "2026-04-30",
+    "url": "https://www.gulf-times.com/article/724807/business/dibsy-brings-ai-powered-payment-intelligence-to-qatar-merchants/amp",
+    "quote": "Dibsy's MCP roadmap will allow deeper AI-powered workflows across the payment lifecycle, including payment recovery, support automation, settlement visibility, reconciliation",
+    "summary": "Dibsy launched AI Insights in the merchant dashboard; its roadmap covers payment recovery, settlement visibility and reconciliation.",
+    "ops_implication": "They are building settlement and reconciliation tooling for merchants while volume grows fast.",
+    "confidence": "EVENT",
+    "verification": "verified"
+   },
+   {
+    "id": "t2",
+    "type": "SCALE",
+    "event_date": "2026-10-09",
+    "url": "https://dohanews.co/qatari-fintech-dibsy-enters-forbes-middle-easts-2026-fintech-50/",
+    "quote": "its transaction count rose by 49% compared with the same period a year earlier, while payment volume increased by 112%",
+    "summary": "Dibsy entered the Forbes Middle East Fintech 50 for 2026; in Q1 2026 transactions grew 49% and payment volume 112% year over year.",
+    "ops_implication": "More money rides on every refund or settlement case that goes wrong.",
+    "confidence": "EVENT",
+    "verification": "verified"
+   }
+  ],
+  "coverage": {
+   "news": "Forbes Fintech 50, AI Insights",
+   "company_site": "decline codes guide",
+   "jobs": "none",
+   "people": "CTO quote on roadmap",
+   "base": "refund / settlement costs"
+  },
+  "process_a": "refunds that don't land and settlements that don't match",
+  "process_b": "recovering failed payments after declines",
+  "notes": "They build similar merchant-facing tooling; angle is building on top instead of from scratch."
+ },
+ "expected": {
+  "d1_offer": "EMBED",
+  "d3_basis": "B",
+  "d3_offer": "EMBED"
+ },
+ "packages": [
+  {
+   "contact_key": "c1",
+   "d1_trigger_ids": [
+    "t1",
+    "t2"
+   ],
+   "d3_basis": "B",
+   "touches": [
+    {
+     "day": "D1",
+     "channel": "email",
+     "subject": "+112% volume",
+     "body": "Hi Dinesh,\n\nCongrats on the Forbes Fintech 50, and on Q1: 49% more transactions but 112% more volume. That's more money riding on every case that goes wrong.\n\nI also saw AI Insights and the roadmap toward settlement visibility and reconciliation. My guess is that's a lot to build in-house while volume doubles.\n\nWe have the base in place: one case per payment with its full trail, flags when something drifts, and rules tested on past data before anything, including an AI, acts on them. The interesting part is what to build on top, and we want to shape it with a few payments teams on their real data rather than guess.\n\nFor Dibsy, that could be the settlement and reconciliation layer behind your roadmap, under your brand, tested first on a month of refunds and settlements. From an export, no integration needed.\n\nWorth testing on refunds and settlements, or is another part of the roadmap a better fit?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+    },
+    {
+     "day": "D1-2",
+     "channel": "linkedin",
+     "subject": "",
+     "body": "Dinesh, congrats on the Forbes Fintech 50. I emailed you an idea for the settlement and reconciliation part of your roadmap. Would value your view."
+    },
+    {
+     "day": "D3",
+     "channel": "email",
+     "subject": "",
+     "body": "Hi Dinesh,\n\nAnother angle: failed payments. Your guide to Qatar decline codes shows how much context a merchant needs to recover a payment.\n\nRecovery is on your roadmap too. The same layer could test a retry or recovery rule on a month of declines and show which payments it would have saved, before it goes live.\n\nIs recovery a bigger lever than settlements for you right now?\n\nIlia"
+    },
+    {
+     "day": "D5",
+     "channel": "email",
+     "subject": "",
+     "body": "Dinesh, last note from me. If this sits with someone else at Dibsy, who would be best to talk to? Happy to take it from there.\n\nIlia"
+    }
+   ]
+  }
+ ]
+}
