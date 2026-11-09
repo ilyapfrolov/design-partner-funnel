@@ -55,6 +55,8 @@ FORBIDDEN = [
     (r"\b(goes|go|going|went) wrong\b|\brides on every\b|\bfall(s|ing)? behind\b|\bpain points?\b",
      "негатив о компании: пишем, где копится ручная работа, а не где компания ошибается"),
 ]
+# Чужая категория (prompts/_positioning.md): в описании нас и в оффере — никакой сверки / сопоставления.
+CATEGORY_DRIFT = re.compile(r"\breconcil\w*|\bmatch(es|ed|ing)?\b[^.?!]{0,40}\bto\b|\bmatching\b", re.I)
 STATE_WORDS = re.compile(r"\b(saw|just|now|new|recently)\b", re.I)   # для «Состояния» в первом абзаце
 CONGRATS = re.compile(r"\bcongrat", re.I)
 
@@ -408,6 +410,10 @@ def check_package(pkg: ContactPackage, contact: Contact, account_fact: str, rese
             if plan.hook_tier == "state" and STATE_WORDS.search(opening):
                 P.append(f"D0: повод — «Состояние», без saw / just / now / new в первом абзаце "
                          f"({STATE_WORDS.search(opening).group(0)!r})")
+            ours = " ".join(x for x in paras if x.lower().startswith(("we've built", "for ")))
+            m = CATEGORY_DRIFT.search(ours)
+            if m:
+                P.append(f"D0: описание нас / оффер уводит в сверку — мы не reconciliation-инструмент ({m.group(0)!r})")
             if plan.d1_offer == "PREBUILD" and not re.search(r"before (you )?commit", low):
                 P.append("D0: оффер PREBUILD — «проверить до того, как вкладывать разработчиков» (before committing…)")
             # вариант «20 минут»

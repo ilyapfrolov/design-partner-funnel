@@ -162,7 +162,7 @@ class FakeRunner:
             self.seen.append("market"); return json.dumps({"triggers": self.market})
         if "Find real people" in prompt:
             self.seen.append("people"); return json.dumps({"candidates": self.people})
-        if "You write a one-week outreach" in prompt:
+        if "You write an outreach sequence" in prompt:
             self.seen.append("write"); return json.dumps({"packages": self.packages})
         if "independent reviewer" in prompt:
             self.seen.append("review"); return json.dumps({"verdict": "PASS", "issues": []})
@@ -319,3 +319,19 @@ def test_retelling_without_statement_is_unofficial(monkeypatch):
     t = dict(g["research"]["triggers"][0], url="https://aggregator.example/nomod", company_statement="")
     st = stages.research(_state(g), FakeRunner(deep=[t]), CFG, TODAY, collector=lambda *a: [])
     assert st.research.triggers[0].verification == "unofficial" and st.status == "on_hold"
+
+
+# ---------- позиционирование: мы не reconciliation-инструмент ----------
+
+def test_category_drift_caught():
+    g, r, plan, pkg, c = _parts("nomod")
+    body = pkg.touches[0].body
+    pkg.touches[0].body = body.replace("checking last month's payouts against each plan's promise",
+                                       "reconciling last month's payouts")
+    P = check_package(pkg, c, g["account"]["fact"], r, plan, SENDER)
+    assert any("сверку" in p for p in P)
+
+
+def test_positioning_in_writer_and_reviewer():
+    assert "We are NOT" in stages._load("write.md") and "We are NOT" in stages._load("review.md")
+    assert "category_drift" in stages._load("review.md") and "trivial_guess" in stages._load("review.md")

@@ -32,7 +32,9 @@ LINKEDIN_RX = re.compile(r"^https?://([a-z]{2,3}\.)?linkedin\.com/in/[^/?#\s]+/?
 
 def _load(name: str) -> str:
     text = (PROMPTS / name).read_text(encoding="utf-8")
-    return text.replace("{TRIGGERS}", (PROMPTS / "_triggers.md").read_text(encoding="utf-8"))
+    for key, f in (("{TRIGGERS}", "_triggers.md"), ("{POSITIONING}", "_positioning.md")):
+        text = text.replace(key, (PROMPTS / f).read_text(encoding="utf-8"))
+    return text
 
 
 def _prompt(name: str, ctx: dict) -> str:
@@ -421,7 +423,7 @@ def write_context(st: AccountState, cfg: dict) -> dict:
         "account": {"company": st.account.company, "segment": st.account.segment, "country": st.account.country,
                     "size_band": size_band(st.account.size), "fact": st.account.fact,
                     "hypothesis": st.account.hypothesis, "fallback_question": st.account.fallback},
-        "contacts": [c.model_dump(include={"key", "name", "title", "level", "start_day"})
+        "contacts": [c.model_dump(include={"key", "name", "title", "level", "tier", "start_day"})
                      for c in st.contacts if c.email],
         "verified_triggers": [t.model_dump(include={"id", "type", "event_date", "tier", "summary", "ops_implication", "quote"})
                               for t in usable_triggers(st.research)],
