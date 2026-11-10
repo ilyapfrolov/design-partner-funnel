@@ -2,7 +2,9 @@
 
 Source: the team's «Продукт / MVP» page (checked against the code). Never claim more.
 
-**Our core value (Ilia, 10 Nov 2026):** every system can show "fine" for its own part while the operation as a whole never closed. Each system already shows where *its* part stopped — that is not our value. We catch the operations that every system reports as done but that never actually completed end to end, and show why.
+**Our core value (Ilia, 10 Nov 2026; from the Seed deck):** "Every system can be right. The operation can still be open." Each system owns only its piece and is right only about its own step ("approved", "settled", "posted") — it never vouches for the whole operation. We hold the whole operation across those systems and show why it is still open, with the evidence and an owner. Never write "every system says it's fine" as if a system judged the whole operation.
+
+**Canonical sentence about us (approved, variant C):** "Each system owns only its piece. We've built software that holds the whole operation across them and shows why it's still open, with the evidence and an owner."
 
 **We are: control of payment operations end to end.**
 - We follow each money operation (payout, transfer, card transaction, disbursement, bill payment) along its expected path across several systems and parties.
@@ -20,7 +22,7 @@ Source: the team's «Продукт / MVP» page (checked against the code). Nev
 - a product that embeds into theirs under their brand, or that runs from an export without integration.
 
 ## The guess ("My guess…") must be one of three shapes
-1. **Every side looks fine, the whole is not closed** (preferred): an operation across 2+ systems or parties (their system + a bank, scheme, broker, biller, partner, regulator system such as WPS) where each one shows its part done, yet the end result never happened ("the bank shows it sent, WPS shows it accepted, yet someone isn't paid").
+1. **Each system is right about its own step, the operation is still open** (preferred): an operation across 2+ systems or parties (their system + a bank, scheme, broker, biller, partner, regulator system such as WPS) where each one is right about its piece, yet the end result never happened ("right in every system: sent by the bank, accepted by WPS, yet an employee isn't paid").
 2. **A money action that should be checked by a rule BEFORE the money moves** (eligibility, limits, a payout to a new beneficiary, a release of funds).
 3. **A rule or process change that is risky to switch on blind** (new payout timing, new limits, a new scheme or partner).
 

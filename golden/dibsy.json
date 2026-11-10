@@ -74,13 +74,13 @@
      "day": "D0",
      "channel": "email",
      "subject": "+112% volume",
-     "body": "Hi Dinesh,\n\nCongrats on the Forbes Fintech 50 and on Q1 volume up 112%.\n\nAI Insights has been live since April, and reconciliation is next. My guess is building that in-house while volume doubles is a big project.\n\nWe've built software that follows each payment across systems and catches the ones that never really closed, even when every system says they're fine. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor Dibsy, that could mean putting a month of settlements through it before committing engineers, and seeing which looked settled but never closed.\n\nWorth testing on settlements, or another part of the roadmap?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "body": "Hi Dinesh,\n\nCongrats on the Forbes Fintech 50 and on Q1 volume up 112%.\n\nAI Insights has been live since April, and reconciliation is next. My guess is building that in-house while volume doubles is a big project.\n\nEach system owns only its piece. We've built software that holds the whole operation across them and shows why it's still open, with the evidence and an owner. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor Dibsy, that could mean putting a month of settlements through it before committing engineers, and seeing which never closed.\n\nWorth testing on settlements, or another part of the roadmap?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
      "day": "D0-LI",
      "channel": "linkedin",
      "subject": "",
-     "body": "Dinesh, congrats on the Forbes Fintech 50 and on Q1 volume up 112%. AI Insights has been live since April, and reconciliation is next. We've built software that catches payments that never really closed, even when every system says they're fine, and we're shaping what comes next with a few payments teams. Worth running a month of settlements through it before committing engineers, or is another part of the roadmap a better fit?\n\nIlia"
+     "body": "Dinesh, congrats on the Forbes Fintech 50 and on Q1 volume up 112%. AI Insights has been live since April, and reconciliation is next. Each system owns only its piece; we've built software that holds the whole operation and shows why it's still open. We're shaping what comes next with a few payments teams. Worth running a month of settlements through it before committing engineers, or is another part of the roadmap a better fit?\n\nIlia"
     },
     {
      "day": "D3",
@@ -104,5 +104,5 @@
   }
  ],
  "as_of": "2026-11-09",
- "approval": "v4 одобрено Ильёй 10 Nov 2026: ценность — операции, которые все системы показывают «ок», а целиком не закрыты; оффер называет результат; без сверки."
+ "approval": "v5 одобрено Ильёй 10 Nov 2026: фраза про нас — вариант C («Each system owns only its piece…»), догадка «right in every system», оффер — что не закрылось."
 }

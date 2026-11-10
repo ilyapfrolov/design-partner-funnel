@@ -84,13 +84,13 @@
      "day": "D0",
      "channel": "email",
      "subject": "CFO Stack",
-     "body": "Hi Aditya,\n\nSaw the CFO Stack launch: Virtual Accounts confirm corporate transfers in real time.\n\nMy guess is the tricky transfers look fine everywhere: in at the bank, received on the account, yet the invoice is still open.\n\nWe've built software that follows each transaction across systems and catches the ones that never really closed, even when every system says they're fine. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor HitPay, that could mean putting a month of transfers through it before committing engineers, and seeing which looked done but never closed.\n\nWorth trying on transfers, or another part of CFO Stack?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "body": "Hi Aditya,\n\nSaw the CFO Stack launch: Virtual Accounts confirm transfers in real time.\n\nMy guess is some transfers are right in every system: in at the bank, on the account, yet the invoice stays open.\n\nEach system owns only its piece. We've built software that holds the whole operation across them and shows why it's still open, with the evidence and an owner. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor HitPay, that could mean putting a month of transfers through it before committing engineers, and seeing which never closed.\n\nWorth trying on transfers, or another part of CFO Stack?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
      "day": "D0-LI",
      "channel": "linkedin",
      "subject": "",
-     "body": "Aditya, saw the CFO Stack launch. My guess is the tricky transfers look fine everywhere, yet the invoice behind them is still open. We've built software that catches transactions that never really closed, even when every system says they're fine, and we're shaping what comes next with a few payments teams. Worth trying on a month of your transfers, or is another part of CFO Stack a better fit?\n\nIlia"
+     "body": "Aditya, saw the CFO Stack launch. My guess is the tricky transfers look fine everywhere, yet the invoice behind them is still open. Each system owns only its piece; we've built software that holds the whole operation and shows why it's still open. We're shaping what comes next with a few payments teams. Worth trying on a month of your transfers, or is another part of CFO Stack a better fit?\n\nIlia"
     },
     {
      "day": "D3",
@@ -114,5 +114,5 @@
   }
  ],
  "as_of": "2026-11-09",
- "approval": "v4 одобрено Ильёй 10 Nov 2026: ценность — операции, которые все системы показывают «ок», а целиком не закрыты; оффер называет результат; без сверки."
+ "approval": "v5 одобрено Ильёй 10 Nov 2026: фраза про нас — вариант C («Each system owns only its piece…»), догадка «right in every system», оффер — что не закрылось."
 }
