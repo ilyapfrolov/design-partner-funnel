@@ -67,19 +67,19 @@
     "t2"
    ],
    "d3_basis": "B",
-   "ending_call": "Would 20 minutes be worth it to compare how customers close invoices today?",
+   "ending_call": "Would 20 minutes be worth it to compare notes on invoices?",
    "touches": [
     {
      "day": "D0",
      "channel": "email",
      "subject": "invoices before 31 December",
-     "body": "Hi Aldrich,\n\nFrom 31 December, the BIR requires large taxpayers and e-commerce sellers to report invoices within days. For NextPay's invoicing customers, \"paid but still open\" becomes a compliance question.\n\nMy guess is the hard cases are the payments: a QR Ph transfer under another reference, a partial payment, a refund.\n\nWe've built software that follows each invoice across systems and shows where it stopped and who owns it. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor NextPay, that could start with checking last month's invoices against a three-day rule.\n\nWorth trying on invoices, or are returned payouts a better place to start?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "body": "Hi Aldrich,\n\nFrom 31 December, BIR requires large taxpayers and e-commerce sellers to report invoices within days. For NextPay's customers, \"paid but still open\" becomes a compliance question.\n\nMy guess is the tricky invoices look paid everywhere, yet never close.\n\nWe've built software that follows each invoice across systems and catches the ones that never really closed, even when every system says they're fine. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor NextPay, that could start with checking last month's invoices against a three-day rule and seeing which stayed open.\n\nWorth trying on invoices, or on returned payouts?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
      "day": "D0-LI",
      "channel": "linkedin",
      "subject": "",
-     "body": "Aldrich, from 31 December the BIR requires large taxpayers and e-commerce sellers to report invoices within days, so \"paid but still open\" becomes a compliance question for NextPay's customers. We've built software that follows each invoice across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data. Worth checking last month's invoices against a three-day rule, or are returned payouts a better place to start?\n\nIlia"
+     "body": "Aldrich, from 31 December the BIR requires large taxpayers and e-commerce sellers to report invoices within days, so \"paid but still open\" becomes a compliance question for NextPay's customers. We've built software that catches invoices that never really closed, even when every system says they're fine, and we're shaping what comes next with a few payments teams. Worth checking last month's invoices against a three-day rule, or are returned payouts a better place to start?\n\nIlia"
     },
     {
      "day": "D3",
@@ -103,5 +103,5 @@
   }
  ],
  "as_of": "2026-11-09",
- "approval": "v3 одобрено Ильёй 9 Nov 2026 (120 слов, подводка, без бренда и выгрузки, график 0/+3/+7/+12, две концовки, без негатива). D0-LI — сжатие дня 0 для LinkedIn, на просмотр."
+ "approval": "v4 одобрено Ильёй 10 Nov 2026: ценность — операции, которые все системы показывают «ок», а целиком не закрыты; оффер называет результат; без сверки."
 }

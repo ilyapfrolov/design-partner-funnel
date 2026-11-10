@@ -78,19 +78,19 @@
     "t1"
    ],
    "d3_basis": "t3",
-   "ending_call": "Would 20 minutes be worth it to compare how your team handles these today?",
+   "ending_call": "Would 20 minutes be worth it to compare notes on transfers?",
    "touches": [
     {
      "day": "D0",
      "channel": "email",
      "subject": "CFO Stack",
-     "body": "Hi Aditya,\n\nSaw the CFO Stack launch: Virtual Accounts that confirm corporate transfers in real time take manual matching off SME finance teams.\n\nMy guess is the hard part is the leftovers: unmatched transfers, partial payments, bounced payouts, each needing an owner.\n\nWe've built software that follows each transaction across systems and shows where it stopped and who owns it. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor HitPay, that could mean running the first month of Virtual Account transfers through it before committing engineers to that layer.\n\nWorth trying on unmatched transfers, or is another part of CFO Stack a better fit?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "body": "Hi Aditya,\n\nSaw the CFO Stack launch: Virtual Accounts confirm corporate transfers in real time.\n\nMy guess is the tricky transfers look fine everywhere: in at the bank, received on the account, yet the invoice is still open.\n\nWe've built software that follows each transaction across systems and catches the ones that never really closed, even when every system says they're fine. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor HitPay, that could mean putting a month of transfers through it before committing engineers, and seeing which looked done but never closed.\n\nWorth trying on transfers, or another part of CFO Stack?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
      "day": "D0-LI",
      "channel": "linkedin",
      "subject": "",
-     "body": "Aditya, saw the CFO Stack launch. My guess is the hard part is the leftovers in Virtual Accounts: unmatched transfers, partial payments, bounced payouts, each needing an owner. We've built software that follows each transaction across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data. Worth trying on a month of your transfers, or is another part of CFO Stack a better fit?\n\nIlia"
+     "body": "Aditya, saw the CFO Stack launch. My guess is the hard part is the leftovers in Virtual Accounts: unmatched transfers, partial payments, bounced payouts, each needing an owner. We've built software that catches transactions that never really closed, even when every system says they're fine, and we're shaping what comes next with a few payments teams. Worth trying on a month of your transfers, or is another part of CFO Stack a better fit?\n\nIlia"
     },
     {
      "day": "D3",
@@ -114,5 +114,5 @@
   }
  ],
  "as_of": "2026-11-09",
- "approval": "v3 одобрено Ильёй 9 Nov 2026 (120 слов, подводка, без бренда и выгрузки, график 0/+3/+7/+12, две концовки, без негатива). D0-LI — сжатие дня 0 для LinkedIn, на просмотр."
+ "approval": "v4 одобрено Ильёй 10 Nov 2026: ценность — операции, которые все системы показывают «ок», а целиком не закрыты; оффер называет результат; без сверки."
 }

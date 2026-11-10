@@ -19,15 +19,15 @@ NEVER: the name HAIA in the body (signature only) · customers, pilots, integrat
    - `plan.hook_tier` = `state` (61–270 days): NEVER congratulate, never "saw", "just", "now", "new", "recently". Write it as an established fact: "Since March, X has…".
    - `plan.cohort` = `market`: the opener is the market event and what it means for this company's customers; never present it as news about the company.
 2. The guess: starts with "My guess" — about `process_a`, in one of the three allowed shapes above. Never negative about the company.
-3. Exactly this shape: "We've built software that follows each <operation> across systems and shows where it stopped and who owns it. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess."
-4. The offer in one sentence that names the RESULT they get, not only what we run: "For <Company>, that could mean putting <a month of their operation> through it and seeing <what they would see: which step each one stopped at, who had it / which would have been caught / which came back>." "We run your data" without what they see is not an offer.
+3. Exactly this shape: "We've built software that follows each <operation> across systems and catches the ones that never really closed, even when every system says they're fine. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess."
+4. The offer in one sentence that names the RESULT they get, not only what we run: "For <Company>, that could mean putting <a month of their operation> through it and seeing <which looked done everywhere but never closed / never arrived / were never paid out>." "We run your data" without what they see is not an offer.
 5. The ending — the "Мягкий" variant: one question with a concrete option A and their alternative, ending with "?": "Worth trying on <X>, or <their alternative>?"
 Start with "Hi <first name>,". Subject: 2–5 words, looks internal, tied to the trigger. Signature, each on its own line: sender.name / sender.title / sender.site.
 
 `ending_call` — the "20 минут" variant of paragraph 5 (the code swaps it in): "Would 20 minutes be worth it to compare how your team <does X> today?" A discovery conversation, not a demo. The whole email with this ending must also fit 120 words.
 
 ## D0-LI · first message in LinkedIn (max 80 words) — used when the main channel is LinkedIn
-"<First name>, " + trigger + guess + a one-line result ("A month of <operation> through it would show where each one stopped.") + "We've built software that follows each <operation> across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data." + the Мягкий question. End with sender.short on its own line.
+"<First name>, " + trigger + guess + a one-line result ("A month of <operation> through it would show where each one stopped.") + "We've built software that catches <operation>s that never really closed, even when every system says they're fine, and we're shaping what comes next with a few payments teams." + the Мягкий question. End with sender.short on its own line.
 
 ## +3 · email in the same thread (max 90 words)
 Basis rule (the code checks it):

@@ -56,19 +56,19 @@
     "t1"
    ],
    "d3_basis": "B",
-   "ending_call": "Would 20 minutes be worth it to compare how your team tracks payout timing today?",
+   "ending_call": "Would 20 minutes be worth it to compare notes on payouts?",
    "touches": [
     {
      "day": "D0",
      "channel": "email",
      "subject": "next day, two days, five days",
-     "body": "Hi Wendy,\n\nSince July, Nomod has offered Next Day, Two Days and Five Days payouts. Faster money is a strong reason for a merchant to stay.\n\nMy guess is each promise needs watching: three schedules, UAE holidays and minimums each add payouts your team has to keep track of.\n\nWe've built software that follows each payout across systems and shows where it stopped and who owns it. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor Nomod, that could start with checking last month's payouts against each plan's promise.\n\nWorth trying on last month's payouts, or should we test a planned change instead?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
+     "body": "Hi Wendy,\n\nSince July, Nomod has offered Next Day, Two Days and Five Days payouts. Faster money is a reason to stay.\n\nMy guess is some payouts look fine everywhere: sent on schedule, yet the merchant's money arrives late.\n\nWe've built software that follows each payout across systems and catches the ones that never really closed, even when every system says they're fine. The interesting part is what to build on top, and we'd rather shape it with a few payments teams on real data than guess.\n\nFor Nomod, that could start with checking last month's payouts against each plan's promise and seeing which looked on time but weren't.\n\nWorth trying on payouts, or on a change you're planning?\n\nIlia Frolov\nCRO & Product Architect, HAIA\nhaia.finance"
     },
     {
      "day": "D0-LI",
      "channel": "linkedin",
      "subject": "",
-     "body": "Wendy, since July Nomod has offered Next Day, Two Days and Five Days payouts. My guess is each promise adds payouts your team has to keep track of. We've built software that follows each payout across systems and shows where it stopped and who owns it, and we'd rather shape what comes next with a few payments teams on real data. Worth checking last month's payouts against each plan's promise, or should we test a planned change instead?\n\nIlia"
+     "body": "Wendy, since July Nomod has offered Next Day, Two Days and Five Days payouts. My guess is each promise adds payouts your team has to keep track of. We've built software that catches payouts that never really closed, even when every system says they're fine, and we're shaping what comes next with a few payments teams. Worth checking last month's payouts against each plan's promise, or should we test a planned change instead?\n\nIlia"
     },
     {
      "day": "D3",
@@ -92,5 +92,5 @@
   }
  ],
  "as_of": "2026-11-09",
- "approval": "v3 одобрено Ильёй 9 Nov 2026 (120 слов, подводка, без бренда и выгрузки, график 0/+3/+7/+12, две концовки, без негатива). D0-LI — сжатие дня 0 для LinkedIn, на просмотр."
+ "approval": "v4 одобрено Ильёй 10 Nov 2026: ценность — операции, которые все системы показывают «ок», а целиком не закрыты; оффер называет результат; без сверки."
 }
